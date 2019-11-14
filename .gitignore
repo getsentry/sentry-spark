@@ -1,0 +1,12 @@
+.java-version
+target/
+.idea/
+*.iml
+.classpath
+.factorypath
+.project
+.settings/
+
+**/.vscode/**/*
+**/.DS_Store/**/*
+**/.DS_Store
