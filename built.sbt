@@ -6,7 +6,7 @@ val sentryVersion = "1.7.28"
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization := "io.sentry",
-  version := "0.1.0",
+  version := "0.0.1-alpha",
   scalaVersion := "2.11.12",
   scalacOptions ++= Seq("-target:jvm-1.8",
                         "-deprecation",
