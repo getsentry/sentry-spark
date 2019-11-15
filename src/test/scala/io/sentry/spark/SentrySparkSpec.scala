@@ -6,25 +6,26 @@ import org.scalatest._
 
 import org.apache.spark.{SparkContext, SparkConf};
 
-import org.apache.spark.rdd.RDD
-
 import io.sentry.Sentry;
 
 trait SparkContextSetup {
-  def withSparkContext(testMethod: (SparkContext, SparkConf) => Any) {
+  def withSparkContext(testMethod: (SparkContext) => Any) {
     val sparkConf = new SparkConf()
       .setMaster("local")
       .setAppName("Spark Test")
       .set("spark.ui.enabled", "false")
       .set("spark.driver.host", "localhost")
       .set("spark.submit.deployMode", "client")
-      .set("spark.driver.port", "5674")
+      .set("spark.driver.port", "5674");
 
-    val sparkContext = new SparkContext(sparkConf)
+    val sparkContext = new SparkContext(sparkConf);
 
     try {
-      testMethod(sparkContext, sparkConf)
-    } finally sparkContext.stop()
+      testMethod(sparkContext);
+    } finally {
+      sparkContext.stop();
+      Sentry.getContext().clear();
+    }
   }
 }
 
@@ -33,7 +34,7 @@ class SentrySparkSpec
     with Matchers
     with PartialFunctionValues
     with SparkContextSetup {
-  "SentrySpark.applyContext" should "set tags" in withSparkContext { (sparkContext, sparkConf) =>
+  "SentrySpark.applyContext" should "set tags" in withSparkContext { (sparkContext) =>
     {
       SentrySpark.applyContext(sparkContext);
       val tags = Sentry.getContext().getTags().toMap;
@@ -47,6 +48,15 @@ class SentrySparkSpec
       tags.valueAt("driver.port") should equal("5674");
       tags.valueAt("executor.id") should equal("driver");
       tags.valueAt("spark-submit.deployMode") should equal("client");
+    }
+  }
+
+  "SentrySpark.applyContext" should "set a user" in withSparkContext { (sparkContext) =>
+    {
+      SentrySpark.applyContext(sparkContext);
+      val username = Sentry.getContext().getUser().getUsername();
+
+      assert(username == sparkContext.sparkUser)
     }
   }
 }
