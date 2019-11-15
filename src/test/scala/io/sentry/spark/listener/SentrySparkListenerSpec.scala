@@ -1,4 +1,4 @@
-package io.sentry.spark.listeners;
+package io.sentry.spark.listener;
 
 import scala.collection.JavaConversions._;
 
@@ -193,6 +193,5 @@ class SentrySparkSpec extends FlatSpec with Matchers with PartialFunctionValues 
   }
 
   // TODO: Add tests for onTaskEnd
-  "SentrySparkListener.onTaskEnd" should "set breadcrumb with failure" ignore {
-  }
+  "SentrySparkListener.onTaskEnd" should "send to Sentry" ignore {}
 }

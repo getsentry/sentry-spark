@@ -51,7 +51,7 @@ class SentryStreamingListener extends StreamingListener {
     val info = receiverError.receiverInfo;
 
     val eventBuilder: EventBuilder = new EventBuilder()
-      .withMessage(info.error)
+      .withMessage(info.lastError)
       .withTag("name", info.name)
       .withTag("location", info.location)
       .withTag("streamId", info.streamId.toString)
@@ -69,7 +69,7 @@ class SentryStreamingListener extends StreamingListener {
       .recordBreadcrumb(
         new BreadcrumbBuilder()
           .setMessage(s"Batch started with ${info.numRecords} records")
-          .withData("submissionTime", Time.epochMilliToDateString(submissionTime))
+          .withData("submissionTime", Time.epochMilliToDateString(info.submissionTime))
           .build()
       );
   }
@@ -82,20 +82,22 @@ class SentryStreamingListener extends StreamingListener {
       .recordBreadcrumb(
         new BreadcrumbBuilder()
           .setMessage(s"Batch completed with ${info.numRecords} records")
-          .withData("submissionTime", Time.epochMilliToDateString(submissionTime))
+          .withData("submissionTime", Time.epochMilliToDateString(info.submissionTime))
           .build()
       );
   }
 
-  override def onOutputOperationCompleted(outputOperationCompleted: StreamingListenerOutputOperationCompleted) {
-    val info = batchCompleted.batchInfo;
+  override def onOutputOperationCompleted(
+    outputOperationCompleted: StreamingListenerOutputOperationCompleted
+  ) {
+    val info = outputOperationCompleted.outputOperationInfo;
 
     info.failureReason match {
       case Some(reason) => {
         val eventBuilder: EventBuilder = new EventBuilder()
           .withMessage(reason)
           .withTag("name", info.name)
-          .withTag("id", info.id)
+          .withTag("id", info.id.toString)
           .withExtra("description", info.description)
           .withLevel(Event.Level.ERROR)
 
@@ -103,4 +105,5 @@ class SentryStreamingListener extends StreamingListener {
       }
       case None =>
     }
+  }
 }

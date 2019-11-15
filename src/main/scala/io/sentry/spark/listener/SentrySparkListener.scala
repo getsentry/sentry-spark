@@ -17,7 +17,7 @@ import org.apache.spark.scheduler._;
 import org.apache.spark.internal.Logging;
 
 import io.sentry.{Sentry, SentryClient, SentryClientFactory};
-import io.sentry.event.{Event, Breadcrumb, BreadcrumbBuilder, UserBuilder};
+import io.sentry.event.{Event, Breadcrumb, BreadcrumbBuilder, UserBuilder, EventBuilder};
 
 class SentrySparkListener extends SparkListener with Logging {
   override def onApplicationStart(
@@ -164,17 +164,23 @@ object TaskEndParser {
   }
 
   private def captureExecutorLostFailure(reason: ExecutorLostFailure) {
-    Sentry.getContext().addTag("execId", reason.execId.toString);
+    val eventBuilder: EventBuilder = new EventBuilder()
+      .withMessage(reason.toErrorString)
+      .withTag("execId", reason.execId.toString)
+      .withLevel(Event.Level.WARNING)
 
-    Sentry.capture(reason.toErrorString)
+    Sentry.capture(eventBuilder);
   }
 
   private def captureFetchFailed(reason: FetchFailed) {
-    Sentry.getContext().addTag("mapId", reason.mapId.toString);
-    Sentry.getContext().addTag("reduceId", reason.reduceId.toString);
-    Sentry.getContext().addTag("shuffleId", reason.shuffleId.toString);
+    val eventBuilder: EventBuilder = new EventBuilder()
+      .withMessage(reason.toErrorString)
+      .withTag("mapId", reason.mapId.toString)
+      .withTag("reduceId", reason.reduceId.toString)
+      .withTag("shuffleId", reason.shuffleId.toString)
+      .withLevel(Event.Level.WARNING)
 
-    Sentry.capture(reason.toErrorString)
+    Sentry.capture(eventBuilder);
   }
 
   private def captureTaskCommitDenied(reason: TaskCommitDenied) {
@@ -182,10 +188,21 @@ object TaskEndParser {
     Sentry.getContext().addTag("jobID", reason.jobID.toString);
     Sentry.getContext().addTag("partitionID", reason.partitionID.toString);
 
-    Sentry.capture(reason.toErrorString)
+    val eventBuilder: EventBuilder = new EventBuilder()
+      .withMessage(reason.toErrorString)
+      .withTag("attemptNumber", reason.attemptNumber.toString)
+      .withTag("jobID", reason.jobID.toString)
+      .withTag("partitionID", reason.partitionID.toString)
+      .withLevel(Event.Level.WARNING)
+
+    Sentry.capture(eventBuilder);
   }
 
   private def captureErrorString(reason: TaskFailedReason) {
-    Sentry.capture(reason.toErrorString)
+    val eventBuilder: EventBuilder = new EventBuilder()
+      .withMessage(reason.toErrorString)
+      .withLevel(Event.Level.WARNING)
+
+    Sentry.capture(eventBuilder);
   }
 }
