@@ -1,4 +1,4 @@
-package io.sentry.spark.listeners;
+package io.sentry.spark.listener;
 
 import java.time.{Instant, ZoneId, ZonedDateTime}
 

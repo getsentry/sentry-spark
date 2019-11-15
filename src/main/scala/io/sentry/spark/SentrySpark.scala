@@ -9,9 +9,11 @@ import io.sentry.SentryClientFactory;
 import io.sentry.event.UserBuilder;
 
 object SentrySpark {
-  def applyContext(sc: SparkContext) {
+  def init() {
     Sentry.init();
+  }
 
+  def applyContext(sc: SparkContext) {
     this.setTags(sc);
 
     val sparkConf = sc.getConf;

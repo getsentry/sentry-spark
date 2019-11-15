@@ -1,21 +1,20 @@
-package io.sentry.spark.listeners;
+package io.sentry.spark.listener;
 
 import org.apache.spark.sql.streaming.StreamingQueryListener;
 
-import io.sentry.{SentryClient, SentryClientFactory};
+import io.sentry.Sentry;
 
 import io.sentry.event.{Event, BreadcrumbBuilder, EventBuilder};
 
 class SentrySparkQueryListener extends StreamingQueryListener {
-  private val sentry: SentryClient = SentryClientFactory.sentryClient();
   private var name: String = "";
 
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent) {
-    sentry.getContext().addTag("query_id", event.id.toString);
+    Sentry.getContext().addTag("query_id", event.id.toString);
 
     name = event.name;
 
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -30,7 +29,7 @@ class SentrySparkQueryListener extends StreamingQueryListener {
 
     name = progress.name;
 
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -49,10 +48,10 @@ class SentrySparkQueryListener extends StreamingQueryListener {
           .withMessage(exception)
           .withLevel(Event.Level.ERROR)
 
-        sentry.sendEvent(eventBuilder);
+        Sentry.capture(eventBuilder);
       }
       case None => {
-        sentry
+        Sentry
           .getContext()
           .recordBreadcrumb(
             new BreadcrumbBuilder()
