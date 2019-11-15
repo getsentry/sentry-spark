@@ -20,18 +20,16 @@ import io.sentry.{Sentry, SentryClient, SentryClientFactory};
 import io.sentry.event.{Event, Breadcrumb, BreadcrumbBuilder};
 
 class SentrySparkListener extends SparkListener with Logging {
-  private val sentry: SentryClient = SentryClientFactory.sentryClient();
-
   override def onApplicationStart(
     applicationStart: SparkListenerApplicationStart
   ) {
-    sentry.getContext().addTag("app_name", applicationStart.appName);
+    Sentry.getContext().addTag("app_name", applicationStart.appName);
     applicationStart.appId match {
-      case Some(id) => sentry.getContext().addTag("application_id", id)
+      case Some(id) => Sentry.getContext().addTag("application_id", id)
       case None     =>
     };
 
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -42,7 +40,7 @@ class SentrySparkListener extends SparkListener with Logging {
   }
 
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) {
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -53,7 +51,7 @@ class SentrySparkListener extends SparkListener with Logging {
   }
 
   override def onJobStart(jobStart: SparkListenerJobStart) {
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -69,7 +67,7 @@ class SentrySparkListener extends SparkListener with Logging {
       case _            => (Breadcrumb.Level.ERROR, s"Job ${jobEnd.jobId} Failed")
     }
 
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -83,7 +81,7 @@ class SentrySparkListener extends SparkListener with Logging {
   override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted) {
     val stageInfo = stageSubmitted.stageInfo
 
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -102,7 +100,7 @@ class SentrySparkListener extends SparkListener with Logging {
       case None         => (Breadcrumb.Level.INFO, s"Stage ${stageInfo.stageId} Completed")
     }
 
-    sentry
+    Sentry
       .getContext()
       .recordBreadcrumb(
         new BreadcrumbBuilder()
@@ -144,43 +142,43 @@ class SentrySparkListener extends SparkListener with Logging {
     }
 
     private def captureExceptionFailure(reason: ExceptionFailure) {
-      sentry.getContext().addTag("className", reason.className);
-      sentry.getContext().addExtra("description", reason.description);
+      Sentry.getContext().addTag("className", reason.className);
+      Sentry.getContext().addExtra("description", reason.description);
 
       reason.exception match {
-        case Some(exception) => sentry.sendException(exception)
+        case Some(exception) => Sentry.capture(exception)
         case None => {
           val throwable: Throwable = new Throwable(reason.description);
           throwable.setStackTrace(reason.stackTrace)
-          sentry.sendException(throwable)
+          Sentry.capture(throwable)
         }
       }
     }
 
     private def captureExecutorLostFailure(reason: ExecutorLostFailure) {
-      sentry.getContext().addTag("execId", reason.execId.toString);
+      Sentry.getContext().addTag("execId", reason.execId.toString);
 
-      sentry.sendMessage(reason.toErrorString)
+      Sentry.capture(reason.toErrorString)
     }
 
     private def captureFetchFailed(reason: FetchFailed) {
-      sentry.getContext().addTag("mapId", reason.mapId.toString);
-      sentry.getContext().addTag("reduceId", reason.reduceId.toString);
-      sentry.getContext().addTag("shuffleId", reason.shuffleId.toString);
+      Sentry.getContext().addTag("mapId", reason.mapId.toString);
+      Sentry.getContext().addTag("reduceId", reason.reduceId.toString);
+      Sentry.getContext().addTag("shuffleId", reason.shuffleId.toString);
 
-      sentry.sendMessage(reason.toErrorString)
+      Sentry.capture(reason.toErrorString)
     }
 
     private def captureTaskCommitDenied(reason: TaskCommitDenied) {
-      sentry.getContext().addTag("attemptNumber", reason.attemptNumber.toString);
-      sentry.getContext().addTag("jobID", reason.jobID.toString);
-      sentry.getContext().addTag("partitionID", reason.partitionID.toString);
+      Sentry.getContext().addTag("attemptNumber", reason.attemptNumber.toString);
+      Sentry.getContext().addTag("jobID", reason.jobID.toString);
+      Sentry.getContext().addTag("partitionID", reason.partitionID.toString);
 
-      sentry.sendMessage(reason.toErrorString)
+      Sentry.capture(reason.toErrorString)
     }
 
     private def captureErrorString(reason: TaskFailedReason) {
-      sentry.sendMessage(reason.toErrorString)
+      Sentry.capture(reason.toErrorString)
     }
   }
 }

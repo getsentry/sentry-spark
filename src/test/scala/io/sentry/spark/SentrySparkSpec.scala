@@ -1,18 +1,52 @@
-// package io.sentry.spark;
+package io.sentry.spark;
 
-// import org.scalatest.FlatSpec
+import scala.collection.JavaConversions._
 
-// import org.apache.spark.{SparkContext, SparkConf};
+import org.scalatest._
 
-// import io.sentry.Sentry;
-// import io.sentry.spark._;
+import org.apache.spark.{SparkContext, SparkConf};
 
-// class SentrySparkSpec extends FlatSpec {
-//   it should "set tags" in {
-//     val config = new SparkConf().setAppName("ExampleApp").setMaster("local")
-//     val sparkContext = new SparkContext(config);
-//     SentrySpark.applyContext(sparkContext);
+import org.apache.spark.rdd.RDD
 
-//     println(Sentry.getContext().getTags())
-//   }
-// }
+import io.sentry.Sentry;
+
+trait SparkContextSetup {
+  def withSparkContext(testMethod: (SparkContext, SparkConf) => Any) {
+    val sparkConf = new SparkConf()
+      .setMaster("local")
+      .setAppName("Spark Test")
+      .set("spark.ui.enabled", "false")
+      .set("spark.driver.host", "localhost")
+      .set("spark.submit.deployMode", "client")
+      .set("spark.driver.port", "5674")
+
+    val sparkContext = new SparkContext(sparkConf)
+
+    try {
+      testMethod(sparkContext, sparkConf)
+    } finally sparkContext.stop()
+  }
+}
+
+class SentrySparkSpec
+    extends FlatSpec
+    with Matchers
+    with PartialFunctionValues
+    with SparkContextSetup {
+  "SentrySpark.applyContext" should "set tags" in withSparkContext { (sparkContext, sparkConf) =>
+    {
+      SentrySpark.applyContext(sparkContext);
+      val tags = Sentry.getContext().getTags().toMap;
+
+      tags.valueAt("app_name") should equal(sparkContext.appName);
+      tags.valueAt("version") should equal(sparkContext.version);
+      tags.valueAt("application_id") should equal(sparkContext.applicationId);
+      tags.valueAt("master") should equal(sparkContext.master);
+
+      tags.valueAt("driver.host") should equal("localhost");
+      tags.valueAt("driver.port") should equal("5674");
+      tags.valueAt("executor.id") should equal("driver");
+      tags.valueAt("spark-submit.deployMode") should equal("client");
+    }
+  }
+}

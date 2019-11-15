@@ -22,11 +22,13 @@ lazy val root: Project = project
   .settings(
     name := "sentry-spark",
     description := "Sentry Integration for Apache Spark",
+    parallelExecution in Test := false,
+    fork in Test := true,
+    javaOptions in Test ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled"),
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-sql" % sparkVersion,
       "io.sentry" % "sentry" % sentryVersion,
       // Testing
-      "org.scalactic" %% "scalactic" % "3.0.8",
-      "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+      "org.scalatest" %% "scalatest" % "3.0.8" % "test",
     )
   )

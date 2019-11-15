@@ -1,5 +1,7 @@
 package io.sentry.spark;
 
+import scala.util.{Try, Success, Failure}
+
 import org.apache.spark.SparkContext;
 
 import io.sentry.Sentry;
@@ -21,9 +23,14 @@ object SentrySpark {
       ("driver.port", "spark.driver.port")
     );
 
-    tags.foreach(
-      tag => Sentry.getContext().addTag(tag._1, sparkConf.get(tag._2))
-    );
+    def getConf(value: String) = Try {
+      sparkConf.get(value)
+    }
+
+    for ((key, value) <- tags) getConf(value) match {
+      case Success(configValue) => Sentry.getContext().addTag(key, configValue)
+      case Failure(_)           =>
+    }
   }
 
   def setTags(sc: SparkContext) {
