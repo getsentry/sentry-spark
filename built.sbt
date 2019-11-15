@@ -22,6 +22,7 @@ lazy val root: Project = project
   .settings(
     name := "sentry-spark",
     description := "Sentry Integration for Apache Spark",
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     parallelExecution in Test := false,
     fork in Test := true,
     javaOptions in Test ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled"),

@@ -8,18 +8,15 @@ import org.apache.spark.{
   ExceptionFailure,
   ExecutorLostFailure,
   FetchFailed,
-  TaskCommitDenied,
-  TaskKilled,
-  Resubmitted
+  TaskCommitDenied
 };
 
 import org.apache.spark.scheduler._;
-import org.apache.spark.internal.Logging;
 
-import io.sentry.{Sentry, SentryClient, SentryClientFactory};
+import io.sentry.Sentry;
 import io.sentry.event.{Event, Breadcrumb, BreadcrumbBuilder, UserBuilder, EventBuilder};
 
-class SentrySparkListener extends SparkListener with Logging {
+class SentrySparkListener extends SparkListener {
   override def onApplicationStart(
     applicationStart: SparkListenerApplicationStart
   ) {
