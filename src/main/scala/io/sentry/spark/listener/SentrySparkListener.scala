@@ -1,6 +1,6 @@
 package io.sentry.spark.listener;
 
-import java.time.{Instant, ZoneId, ZonedDateTime}
+import io.sentry.spark.util.Time;
 
 import org.apache.spark.{
   TaskFailedReason,
@@ -40,7 +40,7 @@ class SentrySparkListener extends SparkListener with Logging {
       .recordBreadcrumb(
         new BreadcrumbBuilder()
           .setMessage(s"Application ${applicationStart.appName} started")
-          .withData("time", epochMilliToDateString(applicationStart.time))
+          .withData("time", Time.epochMilliToDateString(applicationStart.time))
           .build()
       );
   }
@@ -51,7 +51,7 @@ class SentrySparkListener extends SparkListener with Logging {
       .recordBreadcrumb(
         new BreadcrumbBuilder()
           .setMessage("Application ended")
-          .withData("time", epochMilliToDateString(applicationEnd.time))
+          .withData("time", Time.epochMilliToDateString(applicationEnd.time))
           .build()
       );
   }
@@ -62,7 +62,7 @@ class SentrySparkListener extends SparkListener with Logging {
       .recordBreadcrumb(
         new BreadcrumbBuilder()
           .setMessage(s"Job ${jobStart.jobId} Started")
-          .withData("time", epochMilliToDateString(jobStart.time))
+          .withData("time", Time.epochMilliToDateString(jobStart.time))
           .build()
       );
   }
@@ -79,7 +79,7 @@ class SentrySparkListener extends SparkListener with Logging {
         new BreadcrumbBuilder()
           .setLevel(dataTuple._1)
           .setMessage(dataTuple._2)
-          .withData("time", epochMilliToDateString(jobEnd.time))
+          .withData("time", Time.epochMilliToDateString(jobEnd.time))
           .build()
       );
   }
@@ -132,12 +132,6 @@ class SentrySparkListener extends SparkListener with Logging {
         TaskEndParser.parseTaskEndReason(reason.asInstanceOf[TaskFailedReason])
       case _ =>
     }
-  }
-
-  private def epochMilliToDateString(time: Long): String = {
-    val instant = Instant.ofEpochMilli(time);
-    val zonedDAteTimeUtc = ZonedDateTime.ofInstant(instant, ZoneId.of("UTC"));
-    zonedDAteTimeUtc.toString();
   }
 }
 

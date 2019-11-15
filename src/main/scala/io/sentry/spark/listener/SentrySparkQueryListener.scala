@@ -46,6 +46,9 @@ class SentrySparkQueryListener extends StreamingQueryListener {
       case Some(exception) => {
         val eventBuilder: EventBuilder = new EventBuilder()
           .withMessage(exception)
+          .withTag("name", name)
+          .withTag("runId", event.runId.toString)
+          .withTag("id", event.id.toString)
           .withLevel(Event.Level.ERROR)
 
         Sentry.capture(eventBuilder);
