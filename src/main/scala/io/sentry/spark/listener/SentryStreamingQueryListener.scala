@@ -6,7 +6,7 @@ import io.sentry.Sentry;
 
 import io.sentry.event.{Event, BreadcrumbBuilder, EventBuilder};
 
-class SentrySparkQueryListener extends StreamingQueryListener {
+class SentryStreamingQueryListener extends StreamingQueryListener {
   private var name: String = "";
 
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent) {
