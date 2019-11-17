@@ -181,10 +181,6 @@ object TaskEndParser {
   }
 
   private def captureTaskCommitDenied(reason: TaskCommitDenied) {
-    Sentry.getContext().addTag("attemptNumber", reason.attemptNumber.toString);
-    Sentry.getContext().addTag("jobID", reason.jobID.toString);
-    Sentry.getContext().addTag("partitionID", reason.partitionID.toString);
-
     val eventBuilder: EventBuilder = new EventBuilder()
       .withMessage(reason.toErrorString)
       .withTag("attemptNumber", reason.attemptNumber.toString)
