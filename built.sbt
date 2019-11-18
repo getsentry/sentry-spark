@@ -16,9 +16,26 @@ lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   scalafmtOnCompile := true
 )
 
+lazy val publishSettings = Seq(
+  homepage := Some(url("https://github.com/getsentry/sentry-spark")),
+  licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT")),
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/getsentry/sentry-spark"),
+      "scm:git:git@github.com:getsentry/sentry-spark.git"
+    )
+  ),
+  developers := List(
+    Developer("abhiprasad", "Abhijeet Prasad", "aprasad@sentry.io", url("https://github.com/abhiprasad"))
+  )
+)
+
 lazy val root: Project = project
   .in(file("."))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     name := "sentry-spark",
     description := "Sentry Integration for Apache Spark",

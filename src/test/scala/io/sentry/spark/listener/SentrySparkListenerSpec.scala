@@ -5,12 +5,12 @@ import scala.collection.JavaConversions._;
 import org.scalatest._;
 
 import org.apache.spark.scheduler._;
-import org.apache.spark.{SparkContext, SparkConf};
+import org.apache.spark.{SparkContext, SparkConf, SparkException};
 
 import io.sentry.Sentry;
 import io.sentry.event.{Breadcrumb};
 
-class SentrySparkSpec extends FlatSpec with Matchers with PartialFunctionValues {
+class SentrySparkListenerSpec extends FlatSpec with Matchers with PartialFunctionValues {
   val sparkListener = new SentrySparkListener();
 
   override def withFixture(test: NoArgTest) = {
@@ -194,4 +194,34 @@ class SentrySparkSpec extends FlatSpec with Matchers with PartialFunctionValues 
 
   // TODO: Add tests for onTaskEnd
   "SentrySparkListener.onTaskEnd" should "send to Sentry" ignore {}
+
+  // "SentrySparkListener" should "capture an error" in {
+  //   import org.apache.spark.sql.SparkSession;
+
+  //   the[SparkException] thrownBy {
+  //     val spark = SparkSession.builder
+  //       .appName("Simple Application")
+  //       .master("local")
+  //       .config("spark.ui.enabled", "false")
+  //       .config("spark.extraListeners", "io.sentry.spark.listener.SentrySparkListener")
+  //       .getOrCreate()
+
+  //     val testFile = getClass.getResource("/test.txt").toString;
+  //     val logData = spark.read.textFile(testFile).cache()
+
+  //     val numAs = logData
+  //       .filter(line => {
+  //         throw new IllegalStateException("Exception thrown");
+  //         line.contains("a")
+  //       })
+  //       .count()
+  //     val numBs = logData.filter(line => line.contains("b")).count()
+
+  //     println(s"Lines with a: $numAs, Lines with b: $numBs")
+  //     spark.stop()
+  //   } should have message "IllegalStateException";
+
+  //   val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+  //   println(breadcrumbs);
+  // }
 }
