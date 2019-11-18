@@ -9,7 +9,7 @@ import io.sentry.event.BreadcrumbBuilder;
 
 class SentryQueryExecutionListener extends QueryExecutionListener {
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception) {
-    Sentry.getContext().addExtra("query_action", funcName);
+    Sentry.getContext().addTag("query_action", funcName);
 
     Sentry.capture(exception)
   }
