@@ -21,12 +21,14 @@ lazy val publishSettings = Seq(
   licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT")),
   publishMavenStyle := true,
   publishArtifact in Test := false,
+  bintrayRepository := "sentry-spark",
   scmInfo := Some(
     ScmInfo(
       url("https://github.com/getsentry/sentry-spark"),
       "scm:git:git@github.com:getsentry/sentry-spark.git"
     )
   ),
+  bintrayOrganization := Some("getsentry"),
   developers := List(
     Developer("abhiprasad", "Abhijeet Prasad", "aprasad@sentry.io", url("https://github.com/abhiprasad"))
   )

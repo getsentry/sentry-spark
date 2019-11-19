@@ -25,7 +25,6 @@ class SentryQueryExecutionListener extends QueryExecutionListener {
       .recordBreadcrumb(
         new BreadcrumbBuilder()
           .setMessage(s"Query ${funcName} executed succesfully")
-          .withData("duration", Time.epochMilliToDateString(durationNs))
           .build()
       );
   };
