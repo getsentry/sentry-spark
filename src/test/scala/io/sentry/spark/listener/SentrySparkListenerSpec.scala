@@ -6,11 +6,17 @@ import org.scalatest._;
 
 import org.apache.spark.scheduler._;
 import org.apache.spark.{SparkContext, SparkConf, SparkException};
+import org.apache.spark.sql.SparkSession;
 
-import io.sentry.Sentry;
-import io.sentry.event.{Breadcrumb};
+import io.sentry.{Sentry, SentryClient};
+import io.sentry.event.{Breadcrumb, Event};
+import io.sentry.event.helper.ShouldSendEventCallback;
 
-class SentrySparkListenerSpec extends FlatSpec with Matchers with PartialFunctionValues {
+class SentrySparkListenerSpec
+    extends FlatSpec
+    with Matchers
+    with PartialFunctionValues
+    with Assertions {
   val sparkListener = new SentrySparkListener();
 
   override def withFixture(test: NoArgTest) = {
@@ -195,33 +201,47 @@ class SentrySparkListenerSpec extends FlatSpec with Matchers with PartialFunctio
   // TODO: Add tests for onTaskEnd
   "SentrySparkListener.onTaskEnd" should "send to Sentry" ignore {}
 
-  // "SentrySparkListener" should "capture an error" in {
-  //   import org.apache.spark.sql.SparkSession;
+  "SentrySparkListener" should "capture an error" in {
+    val client: SentryClient = Sentry.getStoredClient();
 
-  //   the[SparkException] thrownBy {
-  //     val spark = SparkSession.builder
-  //       .appName("Simple Application")
-  //       .master("local")
-  //       .config("spark.ui.enabled", "false")
-  //       .config("spark.extraListeners", "io.sentry.spark.listener.SentrySparkListener")
-  //       .getOrCreate()
+    var breadcrumbs = Sentry.getContext().getBreadcrumbs();
 
-  //     val testFile = getClass.getResource("/test.txt").toString;
-  //     val logData = spark.read.textFile(testFile).cache()
+    client.addShouldSendEventCallback(new ShouldSendEventCallback() {
+      override def shouldSend(event: Event) = {
+        breadcrumbs = event.getBreadcrumbs();
+        false
+      };
+    });
 
-  //     val numAs = logData
-  //       .filter(line => {
-  //         throw new IllegalStateException("Exception thrown");
-  //         line.contains("a")
-  //       })
-  //       .count()
-  //     val numBs = logData.filter(line => line.contains("b")).count()
+    assertThrows[SparkException] {
+      val spark = SparkSession.builder
+        .appName("Simple Application")
+        .master("local")
+        .config("spark.ui.enabled", "false")
+        .config("spark.extraListeners", "io.sentry.spark.listener.SentrySparkListener")
+        .getOrCreate()
 
-  //     println(s"Lines with a: $numAs, Lines with b: $numBs")
-  //     spark.stop()
-  //   } should have message "IllegalStateException";
+      val testFile = getClass.getResource("/test.txt").toString;
+      val logData = spark.read.textFile(testFile).cache()
 
-  //   val breadcrumbs = Sentry.getContext().getBreadcrumbs();
-  //   println(breadcrumbs);
-  // }
+      val numAs = logData
+        .filter(line => {
+          throw new IllegalStateException("Exception thrown");
+          line.contains("a")
+        })
+        .count()
+      val numBs = logData.filter(line => line.contains("b")).count()
+
+      println(s"Lines with a: $numAs, Lines with b: $numBs")
+      spark.stop()
+    };
+
+    breadcrumbs should have length 3;
+
+    breadcrumbs(0).getMessage() should include("Simple Application");
+    breadcrumbs(1).getMessage() should include("Job");
+    breadcrumbs(1).getMessage() should include("Started");
+    breadcrumbs(2).getMessage() should include("Stage");
+    breadcrumbs(2).getMessage() should include("Submitted");
+  }
 }
