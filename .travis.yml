@@ -1,0 +1,14 @@
+language: scala
+jdk: openjdk8
+scala:
+  - 2.11.12
+
+notifications:
+  webhooks:
+    urls:
+      - https://zeus.ci/hooks/9a1e2ef8-0b1f-11ea-97ff-ce88819b303b/public/provider/travis/webhook
+    on_success: always
+    on_failure: always
+    on_start: always
+    on_cancel: always
+    on_error: always
