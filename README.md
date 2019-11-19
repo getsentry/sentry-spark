@@ -33,7 +33,7 @@ val spark = SparkSession
     .appName("Simple Application")
     .getOrCreate();
 
-SentrySpark.applyContext(spark.sparkContext);
+SentrySpark.applyContext(spark);
 ```
 
 ### Listeners

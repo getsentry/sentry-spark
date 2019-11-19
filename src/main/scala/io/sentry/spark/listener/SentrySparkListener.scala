@@ -15,6 +15,7 @@ import org.apache.spark.scheduler._;
 
 import io.sentry.Sentry;
 import io.sentry.event.{Event, Breadcrumb, BreadcrumbBuilder, UserBuilder, EventBuilder};
+import io.sentry.event.interfaces.ExceptionInterface;
 
 class SentrySparkListener extends SparkListener {
   override def onApplicationStart(
@@ -147,15 +148,27 @@ object TaskEndParser {
   }
 
   private def captureExceptionFailure(reason: ExceptionFailure) {
-    Sentry.getContext().addTag("className", reason.className);
-    Sentry.getContext().addExtra("description", reason.description);
+    val eventBuilderWithoutException: EventBuilder = new EventBuilder()
+      .withMessage(reason.description)
+      .withTag("className", reason.className)
+      .withTag("description", reason.description)
+      .withLevel(Event.Level.ERROR);
 
     reason.exception match {
-      case Some(exception) => Sentry.capture(exception)
+      case Some(exception) => {
+        val eventBuilder: EventBuilder = eventBuilderWithoutException
+          .withSentryInterface(new ExceptionInterface(exception));
+
+        Sentry.capture(eventBuilder)
+      }
       case None => {
         val throwable: Throwable = new Throwable(reason.description);
         throwable.setStackTrace(reason.stackTrace)
-        Sentry.capture(throwable)
+
+        val eventBuilder: EventBuilder = eventBuilderWithoutException
+          .withSentryInterface(new ExceptionInterface(throwable));
+
+        Sentry.capture(eventBuilder);
       }
     }
   }

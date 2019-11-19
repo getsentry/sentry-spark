@@ -3,15 +3,20 @@ package io.sentry.spark.listener;
 import org.apache.spark.sql.util.QueryExecutionListener;
 import org.apache.spark.sql.execution.QueryExecution
 
-import io.sentry.Sentry;
+import io.sentry.spark.util.Time;
 
-import io.sentry.event.BreadcrumbBuilder;
+import io.sentry.Sentry;
+import io.sentry.event.interfaces.ExceptionInterface;
+import io.sentry.event.{Event, BreadcrumbBuilder, EventBuilder};
 
 class SentryQueryExecutionListener extends QueryExecutionListener {
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception) {
-    Sentry.getContext().addTag("query_action", funcName);
+    val eventBuilder: EventBuilder = new EventBuilder()
+      .withMessage(funcName)
+      .withLevel(Event.Level.ERROR)
+      .withSentryInterface(new ExceptionInterface(exception));
 
-    Sentry.capture(exception)
+    Sentry.capture(eventBuilder)
   }
 
   override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long) {
@@ -20,7 +25,7 @@ class SentryQueryExecutionListener extends QueryExecutionListener {
       .recordBreadcrumb(
         new BreadcrumbBuilder()
           .setMessage(s"Query ${funcName} executed succesfully")
-          .withData("duration", durationNs.toString)
+          .withData("duration", Time.epochMilliToDateString(durationNs))
           .build()
       );
   };
