@@ -107,7 +107,10 @@ ssc.addStreamingListener(new SentryStreamingListener);
 
 ## Development
 
-WIP
+```scala
+// Use to debug with logging
+import org.apache.spark.internal.Logging;
+```
 
 ## Contributing
 

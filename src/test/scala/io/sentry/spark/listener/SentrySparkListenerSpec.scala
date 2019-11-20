@@ -193,8 +193,6 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
   "SentrySparkListener.onTaskEnd" should "send to Sentry" ignore {}
 
   "SentrySparkListener" should "capture an error" in {
-    val client: SentryClient = Sentry.getStoredClient();
-
     assert(!this.connection.hasSent);
 
     assertThrows[SparkException] {
@@ -214,9 +212,7 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
           line.contains("a")
         })
         .count()
-      val numBs = logData.filter(line => line.contains("b")).count()
-
-      println(s"Lines with a: $numAs, Lines with b: $numBs")
+      println(s"Lines with a: $numAs")
       spark.stop()
     };
 
