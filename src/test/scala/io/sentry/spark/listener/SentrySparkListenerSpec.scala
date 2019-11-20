@@ -11,21 +11,12 @@ import org.apache.spark.sql.SparkSession;
 import io.sentry.{Sentry, SentryClient};
 import io.sentry.event.{Breadcrumb, Event};
 import io.sentry.event.helper.ShouldSendEventCallback;
+import io.sentry.connection.Connection;
 
-class SentrySparkListenerSpec
-    extends FlatSpec
-    with Matchers
-    with PartialFunctionValues
-    with Assertions {
+import io.sentry.spark.testUtil.SentryBaseSpec;
+
+class SentrySparkListenerSpec extends SentryBaseSpec {
   val sparkListener = new SentrySparkListener();
-
-  override def withFixture(test: NoArgTest) = {
-    try {
-      test();
-    } finally {
-      Sentry.getContext().clear();
-    }
-  }
 
   "SentrySparkListener.onApplicationStart" should "set tags" in {
     val AppName = "test-app-name";
@@ -204,14 +195,7 @@ class SentrySparkListenerSpec
   "SentrySparkListener" should "capture an error" in {
     val client: SentryClient = Sentry.getStoredClient();
 
-    var breadcrumbs = Sentry.getContext().getBreadcrumbs();
-
-    client.addShouldSendEventCallback(new ShouldSendEventCallback() {
-      override def shouldSend(event: Event) = {
-        breadcrumbs = event.getBreadcrumbs();
-        false
-      };
-    });
+    assert(!this.connection.hasSent);
 
     assertThrows[SparkException] {
       val spark = SparkSession.builder
@@ -236,12 +220,6 @@ class SentrySparkListenerSpec
       spark.stop()
     };
 
-    breadcrumbs should have length 3;
-
-    breadcrumbs(0).getMessage() should include("Simple Application");
-    breadcrumbs(1).getMessage() should include("Job");
-    breadcrumbs(1).getMessage() should include("Started");
-    breadcrumbs(2).getMessage() should include("Stage");
-    breadcrumbs(2).getMessage() should include("Submitted");
+    assert(this.connection.hasSent);
   }
 }
