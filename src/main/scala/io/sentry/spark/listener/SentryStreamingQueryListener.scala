@@ -3,7 +3,6 @@ package io.sentry.spark.listener;
 import org.apache.spark.sql.streaming.StreamingQueryListener;
 
 import io.sentry.Sentry;
-
 import io.sentry.event.{Event, BreadcrumbBuilder, EventBuilder};
 
 class SentryStreamingQueryListener extends StreamingQueryListener {

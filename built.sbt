@@ -6,7 +6,7 @@ val sentryVersion = "1.7.28"
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization := "io.sentry",
-  version := "0.0.1-alpha01",
+  version := "0.0.1-alpha02",
   scalaVersion := "2.11.12",
   scalacOptions ++= Seq("-target:jvm-1.8",
                         "-deprecation",
@@ -25,8 +25,8 @@ lazy val publishSettings = Seq(
   scmInfo := Some(
     ScmInfo(
       browseUrl = url("https://github.com/getsentry/sentry-spark"),
-      connection = "https://github.com/getsentry/sentry-spark",
-      devConnection = Some("https://github.com/getsentry/sentry-spark")
+      connection = "scm:git:ssh://ithub.com:getsentry/sentry-spark.git",
+      devConnection = Some("scm:git:ssh://github.com:getsentry/sentry-spark.git")
     )
   ),
   bintrayOrganization := Some("getsentry"),
