@@ -12,6 +12,7 @@ import io.sentry.event.{Event, BreadcrumbBuilder, EventBuilder};
 class SentryQueryExecutionListener extends QueryExecutionListener {
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception) {
     val eventBuilder: EventBuilder = new EventBuilder()
+      .withSdkIntegration("sentry_spark")
       .withMessage(funcName)
       .withLevel(Event.Level.ERROR)
       .withSentryInterface(new ExceptionInterface(exception));

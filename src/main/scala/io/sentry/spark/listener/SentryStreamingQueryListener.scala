@@ -44,6 +44,7 @@ class SentryStreamingQueryListener extends StreamingQueryListener {
     event.exception match {
       case Some(exception) => {
         val eventBuilder: EventBuilder = new EventBuilder()
+          .withSdkIntegration("sentry_spark")
           .withMessage(exception)
           .withTag("name", name)
           .withTag("runId", event.runId.toString)
