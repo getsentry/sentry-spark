@@ -10,9 +10,26 @@ Interested in PySpark? Check out our [PySpark integration](https://docs.sentry.i
 
 ## Installation
 
-WIP - package coming soon.
+Add the package as a library dependecy.
 
-For now you can clone this repository, use `sbt package` to generate a jar, and use `--jars` to send the jar to your spark cluster.
+```scala
+libraryDependencies += "io.sentry" %% "sentry-spark" % "0.0.1-alpha03"
+```
+
+Make sure to [configure the Sentry SDK](https://docs.sentry.io/clients/java/config/#id2).
+
+We recommend using a `sentry.properties` file and place it in `<SPARK_HOME>/conf`, or anywhere in the Spark Driver's classpath.
+
+When using cluster mode, we recommend the `--files` spark-submit option.
+
+In order to use the integration, you will need to make the jar accesible to your Spark Driver.
+
+```bash
+./bin/spark-submit \
+    --jars "sentry-spark_2.11-0.0.1-alpha03.jar" \
+    --files "sentry.properties" \
+    example-spark-job.jar
+```
 
 ## Usage
 
@@ -35,6 +52,8 @@ val spark = SparkSession
 
 SentrySpark.applyContext(spark);
 ```
+
+`SentrySpark.applyContext` can take a `SparkSession`, `SparkContext` or `StreamingContext`.
 
 ### Listeners
 
@@ -62,7 +81,6 @@ val conf = new SparkConf()
 val sc  = new SparkContext(conf)
 ```
 
-
 #### SentryQueryExecutionListener [Spark SQL]
 
 The `SentryQueryExecutionListener` listens for query events and reports failures as Sentry errors. 
@@ -82,14 +100,11 @@ val spark = SparkSession
 The `SentryStreamingQueryListener` listens for streaming queries and reports failures as Sentry errors. 
 
 ```scala
-import io.sentry.spark.listener.SentryQueryExecutionListener;
-
 val spark = SparkSession
     .builder
     .appName("Simple SQL Streaming Application")
+    .config("spark.sql.streaming.streamingQueryListeners", "io.sentry.spark.listener.SentryQueryExecutionListener")
     .getOrCreate();
-
-spark.streams.addListener(new SentryQueryExecutionListener);
 ```
 
 #### SentryStreamingListener [Spark Streaming]
@@ -107,16 +122,26 @@ ssc.addStreamingListener(new SentryStreamingListener);
 
 ## Development
 
-```scala
-// Use to debug with logging
-import org.apache.spark.internal.Logging;
+Package the assets with
+
+```bash
+sbt package
+```
+
+To run tests
+
+```bash
+sbt test
+```
+
+To publish to bintray, make sure you have a valid GPG key and supply your bintray credentials.
+
+For more info see [sbt-bintray](https://github.com/sbt/sbt-bintray) and [sbt-pgp](https://github.com/sbt/sbt-pgp)
+
+```bash
+sbt publishSigned
 ```
 
 ## Contributing
 
 As this integration is under active work, reach out to us on our [Discord](https://discord.gg/ez5KZN7) if you are looking to get involved.
-
-## Upcoming Features
-
-- Add tagging context for `StreamingContext`
-- Add better support for Hive/Pig/Kafka/Flume
