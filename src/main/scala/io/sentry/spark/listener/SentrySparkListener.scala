@@ -149,7 +149,7 @@ object TaskEndParser {
 
   private def captureExceptionFailure(reason: ExceptionFailure) {
     val eventBuilderWithoutException: EventBuilder = new EventBuilder()
-      .withSdkIntegration("sentry_spark")
+      .withSdkIntegration("spark_scala")
       .withMessage(reason.description)
       .withTag("className", reason.className)
       .withTag("description", reason.description)
@@ -176,7 +176,7 @@ object TaskEndParser {
 
   private def captureExecutorLostFailure(reason: ExecutorLostFailure) {
     val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("sentry_spark")
+      .withSdkIntegration("spark_scala")
       .withMessage(reason.toErrorString)
       .withTag("execId", reason.execId.toString)
       .withLevel(Event.Level.WARNING)
@@ -186,7 +186,7 @@ object TaskEndParser {
 
   private def captureFetchFailed(reason: FetchFailed) {
     val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("sentry_spark")
+      .withSdkIntegration("spark_scala")
       .withMessage(reason.toErrorString)
       .withTag("mapId", reason.mapId.toString)
       .withTag("reduceId", reason.reduceId.toString)
@@ -198,7 +198,7 @@ object TaskEndParser {
 
   private def captureTaskCommitDenied(reason: TaskCommitDenied) {
     val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("sentry_spark")
+      .withSdkIntegration("spark_scala")
       .withMessage(reason.toErrorString)
       .withTag("attemptNumber", reason.attemptNumber.toString)
       .withTag("jobID", reason.jobID.toString)
@@ -210,7 +210,7 @@ object TaskEndParser {
 
   private def captureErrorString(reason: TaskFailedReason) {
     val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("sentry_spark")
+      .withSdkIntegration("spark_scala")
       .withMessage(reason.toErrorString)
       .withLevel(Event.Level.WARNING)
 
