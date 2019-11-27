@@ -51,7 +51,7 @@ class SentryStreamingListener extends StreamingListener {
     val info = receiverError.receiverInfo;
 
     val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("sentry_spark")
+      .withSdkIntegration("spark_scala")
       .withMessage(info.lastError)
       .withTag("name", info.name)
       .withTag("location", info.location)
@@ -96,7 +96,7 @@ class SentryStreamingListener extends StreamingListener {
     info.failureReason match {
       case Some(reason) => {
         val eventBuilder: EventBuilder = new EventBuilder()
-          .withSdkIntegration("sentry_spark")
+          .withSdkIntegration("spark_scala")
           .withMessage(reason)
           .withTag("name", info.name)
           .withTag("id", info.id.toString)
