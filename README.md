@@ -103,7 +103,7 @@ The `SentryStreamingQueryListener` listens for streaming queries and reports fai
 val spark = SparkSession
     .builder
     .appName("Simple SQL Streaming Application")
-    .config("spark.sql.streaming.streamingQueryListeners", "io.sentry.spark.listener.SentryQueryExecutionListener")
+    .config("spark.sql.streaming.streamingQueryListeners", "io.sentry.spark.listener.SentryStreamingQueryListener")
     .getOrCreate();
 ```
 
