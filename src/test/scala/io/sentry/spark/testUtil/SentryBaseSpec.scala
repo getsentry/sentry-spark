@@ -6,6 +6,8 @@ import io.sentry.{Sentry, SentryClient, SentryClientFactory};
 import io.sentry.event.Event;
 import io.sentry.connection.{Connection, EventSendCallback};
 
+import org.apache.spark.internal.Logging;
+
 import org.scalatest._;
 
 class MockConnection extends Connection {
@@ -32,15 +34,11 @@ trait SetupSentry extends BeforeAndAfterEach { this: Suite =>
   val contextManager = new SingletonContextManager();
 
   override def beforeEach() {
+    connection.resetMockConnection();
     contextManager.clear();
     val sentryClient = new SentryClient(connection, contextManager);
     Sentry.setStoredClient(sentryClient);
     super.beforeEach();
-  }
-
-  override def afterEach() {
-    connection.resetMockConnection();
-    super.afterEach();
   }
 }
 

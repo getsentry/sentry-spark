@@ -212,7 +212,6 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
           line.contains("a")
         })
         .count()
-      println(s"Lines with a: $numAs")
       spark.stop()
     };
 
