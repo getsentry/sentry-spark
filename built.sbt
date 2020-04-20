@@ -4,10 +4,14 @@ import Keys._
 val sparkVersion = "2.4.5"
 val sentryVersion = "1.7.30"
 
+lazy val scala211 = "2.11.12"
+lazy val scala212 = "2.12.10"
+lazy val supportedScalaVersions = List(scala211, scala212)
+
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization := "io.sentry",
-  version := "0.0.1-alpha04",
-  scalaVersion := "2.11.12",
+  version := "0.0.1-alpha05",
+  crossScalaVersions := supportedScalaVersions,
   scalacOptions ++= Seq("-target:jvm-1.8",
                         "-deprecation",
                         "-feature",
