@@ -1,8 +1,8 @@
 import sbt._
 import Keys._
 
-val sparkVersion = "2.4.4"
-val sentryVersion = "1.7.28"
+val sparkVersion = "2.4.5"
+val sentryVersion = "1.7.30"
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization := "io.sentry",
