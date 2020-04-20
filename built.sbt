@@ -47,8 +47,8 @@ lazy val root: Project = project
     fork in Test := true,
     javaOptions in Test ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled"),
     libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-sql" % sparkVersion,
-      "org.apache.spark" %% "spark-streaming" % sparkVersion,
+      "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
+      "org.apache.spark" %% "spark-streaming" % sparkVersion % "provided",
       "io.sentry" % "sentry" % sentryVersion,
       // Testing
       "org.scalatest" %% "scalatest" % "3.0.8" % "test",
