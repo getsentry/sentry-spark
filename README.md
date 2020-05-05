@@ -1,6 +1,6 @@
 # Sentry for Apache Spark
 
-A Sentry Integration for Scala Spark.
+Use the Sentry Integration for Scala Spark to track your error and crashes in your Spark application.
 
 This integration is in alpha and has an unstable API.
 
@@ -10,10 +10,10 @@ Interested in PySpark? Check out our [PySpark integration](https://docs.sentry.i
 
 ## Installation
 
-Add the package as a library dependecy.
+Add the package as a library dependecy. For the current most update to date version, please see the [changelog](./CHANGELOG.md).
 
 ```scala
-libraryDependencies += "io.sentry" %% "sentry-spark" % "0.0.1-alpha05"
+libraryDependencies += "io.sentry" %% "sentry-spark" % "0.0.1-alpha04"
 ```
 
 Make sure to [configure the Sentry SDK](https://docs.sentry.io/clients/java/config/#id2).
@@ -135,13 +135,37 @@ To run tests
 sbt test
 ```
 
-To publish to bintray, make sure you have a valid GPG key and supply your bintray credentials.
-
-For more info see [sbt-bintray](https://github.com/sbt/sbt-bintray) and [sbt-pgp](https://github.com/sbt/sbt-pgp)
+Test local publishing using
 
 ```bash
-sbt publishSigned
+sbt +publishLocal
 ```
+
+## Publishing
+
+To publish to bintray, first update your bintray credentials using your bintray username and API key (found on the settings page)
+
+```bash
+sbt bintrayChangeCredentials
+```
+
+Double check your configuration with:
+
+```bash
+sbt bintrayWhoami
+```
+
+For more info see [sbt-bintray](https://github.com/sbt/sbt-bintray)
+
+By default, the `sbt-pgp` library will use `gpg`'s default key to sign the files, but this can be changed, just read through the [sbt-pgp](https://github.com/sbt/sbt-pgp) docs. 
+
+To sign and publish the library:
+
+```bash
+sbt +publishSigned
+```
+
+You can then upload to maven through the bintray interface by entering in the proper credentials. 
 
 ## Contributing
 
