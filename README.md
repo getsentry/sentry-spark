@@ -13,7 +13,7 @@ Interested in PySpark? Check out our [PySpark integration](https://docs.sentry.i
 Add the package as a library dependecy.
 
 ```scala
-libraryDependencies += "io.sentry" %% "sentry-spark" % "0.0.1-alpha04"
+libraryDependencies += "io.sentry" %% "sentry-spark" % "0.0.1-alpha05"
 ```
 
 Make sure to [configure the Sentry SDK](https://docs.sentry.io/clients/java/config/#id2).
@@ -25,8 +25,9 @@ When using cluster mode, we recommend the `--files` spark-submit option.
 In order to use the integration, you will need to make the jar accesible to your Spark Driver.
 
 ```bash
+SCALA_VERSION="2.11" # or "2.12"
 ./bin/spark-submit \
-    --jars "sentry-spark_2.11-0.0.1-alpha04.jar" \
+    --jars "sentry-spark_$SCALA_VERSION-0.0.1-alpha05.jar" \
     --files "sentry.properties" \
     example-spark-job.jar
 ```

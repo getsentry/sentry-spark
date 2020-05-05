@@ -215,6 +215,7 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
       spark.stop()
     };
 
+    Thread.sleep(1000)
     assert(this.connection.hasSent);
   }
 }
