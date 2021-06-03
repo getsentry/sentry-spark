@@ -5,28 +5,26 @@ import org.apache.spark.sql.execution.QueryExecution
 
 import io.sentry.spark.util.Time;
 
-import io.sentry.Sentry;
-import io.sentry.event.interfaces.ExceptionInterface;
-import io.sentry.event.{Event, BreadcrumbBuilder, EventBuilder};
+import io.sentry.{Sentry, Breadcrumb, SentryEvent, SentryLevel};
+import io.sentry.protocol.Message
 
 class SentryQueryExecutionListener extends QueryExecutionListener {
   override def onFailure(funcName: String, qe: QueryExecution, exception: Exception) {
-    val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("spark_scala")
-      .withMessage(funcName)
-      .withLevel(Event.Level.ERROR)
-      .withSentryInterface(new ExceptionInterface(exception));
+    val event = new SentryEvent();
+    event.setThrowable(exception);
+    event.setLevel(SentryLevel.ERROR);
 
-    Sentry.capture(eventBuilder)
+    val message = new Message();
+    message.setFormatted(funcName);
+    event.setMessage(message);
+
+    Sentry.captureEvent(event);
   }
 
   override def onSuccess(funcName: String, qe: QueryExecution, durationNs: Long) {
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Query ${funcName} executed succesfully")
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Query ${funcName} executed succesfully");
+    breadcrumb.setData("duration", durationNs);
+    Sentry.addBreadcrumb(breadcrumb);
   };
 }
