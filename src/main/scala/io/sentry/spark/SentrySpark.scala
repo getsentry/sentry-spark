@@ -6,14 +6,10 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.streaming.StreamingContext;
 import org.apache.spark.SparkContext;
 
-import io.sentry.{Sentry};
-import io.sentry.event.UserBuilder;
+import io.sentry.{Sentry, SentryOptions};
+import io.sentry.protocol.User;
 
 object SentrySpark {
-  def init() {
-    Sentry.init();
-  }
-
   def applyContext(sparkContext: SparkContext) {
     this.setSparkContextTags(sparkContext);
   }
@@ -27,33 +23,33 @@ object SentrySpark {
   }
 
   def setSparkContextTags(sc: SparkContext) {
-    Sentry
-      .getContext()
-      .setUser(
-        new UserBuilder().setUsername(sc.sparkUser).build()
-      );
-
-    Sentry.getContext().addTag("version", sc.version);
-    Sentry.getContext().addTag("app_name", sc.appName);
-    Sentry.getContext().addTag("application_id", sc.applicationId);
-    Sentry.getContext().addTag("master", sc.master);
-
-    val sparkConf = sc.getConf;
-
     val tags: List[(String, String)] = List(
       ("spark-submit.deployMode", "spark.submit.deployMode"),
       ("executor.id", "spark.executor.id"),
       ("driver.host", "spark.driver.host"),
       ("driver.port", "spark.driver.port")
     );
-
+    val sparkConf = sc.getConf;
     def getConf(value: String) = Try {
       sparkConf.get(value)
     }
 
-    for ((key, value) <- tags) getConf(value) match {
-      case Success(configValue) => Sentry.getContext().addTag(key, configValue)
-      case Failure(_)           =>
-    }
+    Sentry.configureScope((scope) => {
+      // Set Spark User
+      val user = new User();
+      user.setUsername(sc.sparkUser);
+      scope.setUser(user);
+
+      // Set SparkContext tags
+      scope.setTag("version", sc.version);
+      scope.setTag("app_name", sc.appName);
+      scope.setTag("application_id", sc.applicationId);
+      scope.setTag("master", sc.master);
+
+      for ((key, value) <- tags) getConf(value) match {
+        case Success(configValue) => scope.setTag(key, configValue)
+        case Failure(_)           =>
+      }
+    });
   }
 }
