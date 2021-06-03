@@ -13,207 +13,162 @@ import org.apache.spark.{
 
 import org.apache.spark.scheduler._;
 
-import io.sentry.Sentry;
-import io.sentry.event.{Event, Breadcrumb, BreadcrumbBuilder, UserBuilder, EventBuilder};
-import io.sentry.event.interfaces.ExceptionInterface;
+import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent};
+import io.sentry.protocol.Message;
 
 class SentrySparkListener extends SparkListener {
+  lazy val BreadcrumbCategory = "spark";
+
   override def onApplicationStart(
     applicationStart: SparkListenerApplicationStart
   ) {
-    Sentry.getContext().addTag("app_name", applicationStart.appName);
-    applicationStart.appId match {
-      case Some(id) => Sentry.getContext().addTag("application_id", id)
-      case None     =>
-    };
+    Sentry.configureScope((scope) => {
+      scope.setTag("app_name", applicationStart.appName);
+      applicationStart.appId match {
+        case Some(id) => scope.setTag("application_id", id)
+        case None     =>
+      };
+      applicationStart.appAttemptId match {
+        case Some(id) => scope.setTag("app_attempt_id", id)
+        case None     =>
+      }
 
-    Sentry
-      .getContext()
-      .setUser(
-        new UserBuilder().setUsername(applicationStart.sparkUser).build()
-      );
-
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Application ${applicationStart.appName} started")
-          .withData("time", Time.epochMilliToDateString(applicationStart.time))
-          .build()
-      );
+      val breadcrumb = new Breadcrumb();
+      breadcrumb.setMessage(s"Application ${applicationStart.appName} started");
+      breadcrumb.setCategory(BreadcrumbCategory);
+      scope.addBreadcrumb(breadcrumb);
+    });
   }
 
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) {
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage("Application ended")
-          .withData("time", Time.epochMilliToDateString(applicationEnd.time))
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage("Application ended");
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onJobStart(jobStart: SparkListenerJobStart) {
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Job ${jobStart.jobId} Started")
-          .withData("time", Time.epochMilliToDateString(jobStart.time))
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Job ${jobStart.jobId} Started");
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onJobEnd(jobEnd: SparkListenerJobEnd) {
-    val dataTuple: (Breadcrumb.Level, String) = jobEnd.jobResult match {
-      case JobSucceeded => (Breadcrumb.Level.INFO, s"Job ${jobEnd.jobId} Ended")
-      case _            => (Breadcrumb.Level.ERROR, s"Job ${jobEnd.jobId} Failed")
+    val dataTuple: (SentryLevel, String) = jobEnd.jobResult match {
+      case JobSucceeded => (SentryLevel.INFO, s"Job ${jobEnd.jobId} Ended")
+      case _            => (SentryLevel.ERROR, s"Job ${jobEnd.jobId} Failed")
     }
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setLevel(dataTuple._1)
-          .setMessage(dataTuple._2)
-          .withData("time", Time.epochMilliToDateString(jobEnd.time))
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setLevel(dataTuple._1);
+    breadcrumb.setMessage(dataTuple._2);
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted) {
     val stageInfo = stageSubmitted.stageInfo
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Stage ${stageInfo.stageId} Submitted")
-          .withData("name", stageInfo.name)
-          .withData("attemptNumber", stageInfo.attemptNumber.toString)
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Stage ${stageInfo.stageId} Submitted");
+    breadcrumb.setData("name", stageInfo.name);
+    breadcrumb.setData("attempt_number", stageInfo.attemptNumber());
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted) {
-    val stageInfo = stageCompleted.stageInfo
+    val stageInfo = stageCompleted.stageInfo;
 
-    val breadcrumbBuilderWithoutMessage = new BreadcrumbBuilder()
-      .withData("name", stageInfo.name)
-      .withData("attemptNumber", stageInfo.attemptNumber.toString);
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setData("name", stageInfo.name);
+    breadcrumb.setData("attempt_number", stageInfo.attemptNumber());
+    breadcrumb.setCategory(BreadcrumbCategory);
 
-    val breadcrumbBuilder: BreadcrumbBuilder = stageInfo.failureReason match {
-      case Some(reason) =>
-        breadcrumbBuilderWithoutMessage
-          .setLevel(Breadcrumb.Level.ERROR)
-          .setMessage(s"Stage ${stageInfo.stageId} Failed")
-          .withData("failureReason", reason)
-      case None =>
-        breadcrumbBuilderWithoutMessage
-          .setLevel(Breadcrumb.Level.INFO)
-          .setMessage(s"Stage ${stageInfo.stageId} Completed")
+    stageInfo.failureReason match {
+      case Some(reason) => {
+        breadcrumb.setLevel(SentryLevel.ERROR);
+        breadcrumb.setMessage(s"Stage ${stageInfo.stageId} Failed");
+        breadcrumb.setData("failure_reason", reason);
+      }
+      case None => {
+        breadcrumb.setLevel(SentryLevel.INFO);
+        breadcrumb.setMessage(s"Stage ${stageInfo.stageId} Completed");
+      }
     }
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        breadcrumbBuilder
-          .build()
-      );
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd) {
     val reason: TaskEndReason = taskEnd.reason;
     reason match {
       case _: TaskFailedReason =>
-        TaskEndParser.parseTaskEndReason(reason.asInstanceOf[TaskFailedReason])
+        TaskEndProcessor.createEventFromReason(reason.asInstanceOf[TaskFailedReason])
       case _ =>
     }
   }
 }
 
-object TaskEndParser {
-  def parseTaskEndReason(reason: TaskFailedReason) {
-    reason match {
+object TaskEndProcessor {
+  def createEventFromReason(reason: TaskFailedReason) {
+    val event = new SentryEvent();
+
+    val message = new Message();
+    message.setFormatted(reason.toErrorString);
+    event.setMessage(message);
+
+    val enhancedEvent = reason match {
       case _: ExceptionFailure =>
-        this.captureExceptionFailure(reason.asInstanceOf[ExceptionFailure])
+        this.enhanceEvent(event, reason.asInstanceOf[ExceptionFailure])
       case _: ExecutorLostFailure =>
-        this.captureExecutorLostFailure(reason.asInstanceOf[ExecutorLostFailure])
-      case _: FetchFailed => this.captureFetchFailed(reason.asInstanceOf[FetchFailed])
+        this.enhanceEvent(event, reason.asInstanceOf[ExecutorLostFailure])
+      case _: FetchFailed => this.enhanceEvent(event, reason.asInstanceOf[FetchFailed])
       case _: TaskCommitDenied =>
-        this.captureTaskCommitDenied(reason.asInstanceOf[TaskCommitDenied])
-      case _ => this.captureErrorString(reason)
+        this.enhanceEvent(event, reason.asInstanceOf[TaskCommitDenied])
+      case _ => event
     }
+
+    Sentry.captureEvent(enhancedEvent);
   }
 
-  private def captureExceptionFailure(reason: ExceptionFailure) {
-    val eventBuilderWithoutException: EventBuilder = new EventBuilder()
-      .withSdkIntegration("spark_scala")
-      .withMessage(reason.description)
-      .withTag("className", reason.className)
-      .withTag("description", reason.description)
-      .withLevel(Event.Level.ERROR);
-
+  private def enhanceEvent(event: SentryEvent, reason: ExceptionFailure): SentryEvent = {
+    event.setLevel(SentryLevel.ERROR);
+    event.setTag("className", reason.className);
     reason.exception match {
       case Some(exception) => {
-        val eventBuilder: EventBuilder = eventBuilderWithoutException
-          .withSentryInterface(new ExceptionInterface(exception));
-
-        Sentry.capture(eventBuilder)
+        event.setThrowable(exception);
       }
       case None => {
         val throwable: Throwable = new Throwable(reason.description);
-        throwable.setStackTrace(reason.stackTrace)
-
-        val eventBuilder: EventBuilder = eventBuilderWithoutException
-          .withSentryInterface(new ExceptionInterface(throwable));
-
-        Sentry.capture(eventBuilder);
+        throwable.setStackTrace(reason.stackTrace);
+        event.setThrowable(throwable);
       }
     }
+    event
   }
 
-  private def captureExecutorLostFailure(reason: ExecutorLostFailure) {
-    val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("spark_scala")
-      .withMessage(reason.toErrorString)
-      .withTag("execId", reason.execId.toString)
-      .withLevel(Event.Level.WARNING)
-
-    Sentry.capture(eventBuilder);
+  private def enhanceEvent(event: SentryEvent, reason: ExecutorLostFailure): SentryEvent = {
+    event.setLevel(SentryLevel.ERROR);
+    event.setTag("execId", reason.execId);
+    event.setExtra("exitCausedByApp", reason.exitCausedByApp);
+    event
   }
 
-  private def captureFetchFailed(reason: FetchFailed) {
-    val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("spark_scala")
-      .withMessage(reason.toErrorString)
-      .withTag("mapId", reason.mapId.toString)
-      .withTag("reduceId", reason.reduceId.toString)
-      .withTag("shuffleId", reason.shuffleId.toString)
-      .withLevel(Event.Level.WARNING)
-
-    Sentry.capture(eventBuilder);
+  private def enhanceEvent(event: SentryEvent, reason: FetchFailed): SentryEvent = {
+    event.setLevel(SentryLevel.WARNING);
+    event.setTag("mapId", reason.mapId.toString);
+    event.setTag("reduceId", reason.reduceId.toString);
+    event.setTag("shuffleId", reason.shuffleId.toString);
+    event
   }
 
-  private def captureTaskCommitDenied(reason: TaskCommitDenied) {
-    val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("spark_scala")
-      .withMessage(reason.toErrorString)
-      .withTag("attemptNumber", reason.attemptNumber.toString)
-      .withTag("jobID", reason.jobID.toString)
-      .withTag("partitionID", reason.partitionID.toString)
-      .withLevel(Event.Level.WARNING)
-
-    Sentry.capture(eventBuilder);
-  }
-
-  private def captureErrorString(reason: TaskFailedReason) {
-    val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("spark_scala")
-      .withMessage(reason.toErrorString)
-      .withLevel(Event.Level.WARNING)
-
-    Sentry.capture(eventBuilder);
+  private def enhanceEvent(event: SentryEvent, reason: TaskCommitDenied): SentryEvent = {
+    event.setLevel(SentryLevel.WARNING);
+    event.setTag("attemptNumber", reason.attemptNumber.toString);
+    event.setTag("jobID", reason.jobID.toString);
+    event.setTag("partitionID", reason.partitionID.toString);
+    event
   }
 }
