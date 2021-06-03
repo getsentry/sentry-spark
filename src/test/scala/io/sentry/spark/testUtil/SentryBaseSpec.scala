@@ -1,43 +1,32 @@
 package io.sentry.spark.testUtil;
 
-import io.sentry.context.ContextManager;
-import io.sentry.context.SingletonContextManager;
-import io.sentry.{Sentry, SentryClient, SentryClientFactory};
-import io.sentry.event.Event;
-import io.sentry.connection.{Connection, EventSendCallback};
-
 import org.apache.spark.internal.Logging;
 
 import org.scalatest._;
+import io.sentry.{Sentry, SentryEvent};
+import scala.collection.mutable.ArrayBuffer;
 
-class MockConnection extends Connection {
-  var hasSent = false;
-  var lastEvent: Any = null;
+trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite =>
+  val events: ArrayBuffer[SentryEvent] = ArrayBuffer();
 
-  def resetMockConnection() {
-    hasSent = false;
-    lastEvent = null;
+  override def beforeAll() {
+    Sentry.init((options) => {
+      options.setDsn("https://username@domain/path");
+
+      options.setBeforeSend((event, hint) => {
+        events :+ event;
+        null
+      });
+    });
+    super.beforeAll();
   }
-
-  override def send(event: Event) {
-    hasSent = true;
-    lastEvent = event;
-  }
-
-  override def close() = ()
-
-  override def addEventSendCallback(eventSendCallback: EventSendCallback) = ()
-}
-
-trait SetupSentry extends BeforeAndAfterEach { this: Suite =>
-  val connection = new MockConnection();
-  val contextManager = new SingletonContextManager();
 
   override def beforeEach() {
-    connection.resetMockConnection();
-    contextManager.clear();
-    val sentryClient = new SentryClient(connection, contextManager);
-    Sentry.setStoredClient(sentryClient);
+    events.clear;
+    Sentry.configureScope((scope) => {
+      scope.clear();
+    });
+
     super.beforeEach();
   }
 }
