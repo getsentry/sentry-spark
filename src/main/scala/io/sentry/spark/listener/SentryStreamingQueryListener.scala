@@ -2,66 +2,54 @@ package io.sentry.spark.listener;
 
 import org.apache.spark.sql.streaming.StreamingQueryListener;
 
-import io.sentry.Sentry;
-import io.sentry.event.{Event, BreadcrumbBuilder, EventBuilder};
-
+import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent};
+import io.sentry.protocol.Message
 class SentryStreamingQueryListener extends StreamingQueryListener {
   private var name: String = "";
 
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent) {
-    Sentry.getContext().addTag("query_id", event.id.toString);
-
     name = event.name;
+    Sentry.configureScope((scope) => {
+        scope.setTag("query_id", event.id.toString);
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Query ${name} started")
-          .withData("runId", event.runId.toString)
-          .build()
-      );
+        val breadcrumb = new Breadcrumb();
+        breadcrumb.setData("runId", event.runId);
+        breadcrumb.setMessage(s"Query ${name} started");
+        scope.addBreadcrumb(breadcrumb);
+    });
   }
 
   override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent) {
     val progress = event.progress;
-
     name = progress.name;
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Query ${name} progressed")
-          .withData("runId", progress.runId.toString)
-          .withData("timestamp", progress.timestamp)
-          .withData("json", progress.json)
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Query ${name} progressed");
+    breadcrumb.setData("runId", progress.runId);
+    breadcrumb.setData("json", progress.json);
   }
 
   override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent) {
     event.exception match {
       case Some(exception) => {
-        val eventBuilder: EventBuilder = new EventBuilder()
-          .withSdkIntegration("spark_scala")
-          .withMessage(exception)
-          .withTag("name", name)
-          .withTag("runId", event.runId.toString)
-          .withTag("id", event.id.toString)
-          .withLevel(Event.Level.ERROR)
 
-        Sentry.capture(eventBuilder);
+        val sentryEvent = new SentryEvent();
+        sentryEvent.setLevel(SentryLevel.ERROR);
+        sentryEvent.setTag("name", name);
+        sentryEvent.setTag("runId", event.runId.toString);
+        sentryEvent.setTag("id", event.id.toString);
+
+        val message = new Message();
+        message.setFormatted(exception);
+        sentryEvent.setMessage(message);
+
+        Sentry.captureEvent(sentryEvent);
       }
       case None => {
-        Sentry
-          .getContext()
-          .recordBreadcrumb(
-            new BreadcrumbBuilder()
-              .setMessage(s"Query ${name} terminated")
-              .withData("runId", event.runId.toString)
-              .build()
-          );
+        val breadcrumb = new Breadcrumb();
+        breadcrumb.setMessage(s"Query ${name} terminated");
+        breadcrumb.setData("runId", event.runId);
+        Sentry.addBreadcrumb(breadcrumb);
       }
     }
   }
