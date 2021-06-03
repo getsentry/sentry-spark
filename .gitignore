@@ -10,3 +10,6 @@ target/
 **/.vscode/**/*
 **/.DS_Store/**/*
 **/.DS_Store
+
+.metals
+.bloop
