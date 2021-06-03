@@ -1,7 +1,6 @@
 package io.sentry.spark;
 
-// import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
+import scala.collection.JavaConverters._;
 
 import org.scalatest._
 

@@ -46,7 +46,7 @@ class SentryStreamingQueryListenerSpec extends SentryBaseSpec {
 
     spark.stop()
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 4;
 
     val firstBreadcrumb = breadcrumbs(0)

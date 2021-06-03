@@ -10,12 +10,12 @@ class SentryStreamingQueryListener extends StreamingQueryListener {
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent) {
     name = event.name;
     Sentry.configureScope((scope) => {
-        scope.setTag("query_id", event.id.toString);
+      scope.setTag("query_id", event.id.toString);
 
-        val breadcrumb = new Breadcrumb();
-        breadcrumb.setData("runId", event.runId);
-        breadcrumb.setMessage(s"Query ${name} started");
-        scope.addBreadcrumb(breadcrumb);
+      val breadcrumb = new Breadcrumb();
+      breadcrumb.setData("runId", event.runId);
+      breadcrumb.setMessage(s"Query ${name} started");
+      scope.addBreadcrumb(breadcrumb);
     });
   }
 
@@ -32,7 +32,6 @@ class SentryStreamingQueryListener extends StreamingQueryListener {
   override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent) {
     event.exception match {
       case Some(exception) => {
-
         val sentryEvent = new SentryEvent();
         sentryEvent.setLevel(SentryLevel.ERROR);
         sentryEvent.setTag("name", name);

@@ -1,6 +1,6 @@
 package io.sentry.spark.listener;
 
-import scala.collection.JavaConversions._;
+import scala.collection.JavaConverters._;
 
 import org.scalatest._;
 
@@ -9,11 +9,9 @@ import org.apache.spark.{SparkContext, SparkConf, SparkException};
 import org.apache.spark.sql.SparkSession;
 
 import io.sentry.{Sentry, SentryClient};
-import io.sentry.event.{Breadcrumb, Event};
-import io.sentry.event.helper.ShouldSendEventCallback;
-import io.sentry.connection.Connection;
 
 import io.sentry.spark.testUtil.SentryBaseSpec;
+import io.sentry.SentryLevel
 
 class SentrySparkListenerSpec extends SentryBaseSpec {
   val sparkListener = new SentrySparkListener();
@@ -27,9 +25,11 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
 
     sparkListener.onApplicationStart(mockAppStart);
 
-    val tags = Sentry.getContext().getTags().toMap;
-    tags.valueAt("app_name") should equal(AppName);
-    tags.valueAt("application_id") should equal(AppId);
+    Sentry.configureScope((scope) => {
+      val tags = scope.getTags().asScala;
+      tags.valueAt("app_name") should equal(AppName);
+      tags.valueAt("application_id") should equal(AppId);
+    });
   }
 
   "SentrySparkListener.onApplicationStart" should "set breadcrumb" in {
@@ -45,24 +45,23 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
       );
     sparkListener.onApplicationStart(mockAppStart);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(AppName);
-    breadcrumb.getData() should contain key ("time")
   }
 
   "SentrySparkListener.onApplicationEnd" should "set breadcrumb" in {
     val mockAppEnd = new SparkListenerApplicationEnd(125L);
     sparkListener.onApplicationEnd(mockAppEnd);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include("ended");
-    breadcrumb.getData() should contain key ("time")
+    this.breadcrumbs
   }
 
   "SentrySparkListener.onJobStart" should "set breadcrumb" in {
@@ -71,12 +70,12 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     val mockJobStart = new SparkListenerJobStart(JobId, 125L, Seq.empty);
     sparkListener.onJobStart(mockJobStart);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(JobId.toString);
-    breadcrumb.getData() should contain key ("time")
+    this.breadcrumbs
   }
 
   "SentrySparkListener.onJobEnd" should "set breadcrumb with success" in {
@@ -85,14 +84,14 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     val mockJobEnd = new SparkListenerJobEnd(JobId, 125L, JobSucceeded);
     sparkListener.onJobEnd(mockJobEnd);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(JobId.toString);
     breadcrumb.getMessage() should include("Ended");
-    assert(breadcrumb.getLevel() == (Breadcrumb.Level.INFO));
-    breadcrumb.getData() should contain key ("time")
+    assert(breadcrumb.getLevel() == (SentryLevel.INFO));
+    this.breadcrumbs
   }
 
   // Test does not work as JobFailed is defined as private[spark] case class
@@ -104,14 +103,14 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     val mockJobEnd = new SparkListenerJobEnd(JobId, 125L, JobSucceeded);
     sparkListener.onJobEnd(mockJobEnd);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(JobId.toString);
     breadcrumb.getMessage() should include("Failed");
-    assert(breadcrumb.getLevel() == (Breadcrumb.Level.ERROR));
-    breadcrumb.getData() should contain key ("time")
+    assert(breadcrumb.getLevel() == (SentryLevel.ERROR));
+    this.breadcrumbs
   }
 
   "SentrySparkListener.onStageSubmitted" should "set breadcrumb" in {
@@ -125,13 +124,13 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     val mockStageSubmitted = new SparkListenerStageSubmitted(mockStageInfo);
     sparkListener.onStageSubmitted(mockStageSubmitted);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(StageId.toString);
 
-    val data = breadcrumb.getData().toMap;
+    val data = breadcrumb.getData().asScala;
     data.valueAt("name") should equal(StageName);
     data.valueAt("attemptNumber") should equal(AttemptNumber.toString);
   }
@@ -148,15 +147,15 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     val mockStageCompleted = new SparkListenerStageCompleted(mockStageInfo);
     sparkListener.onStageCompleted(mockStageCompleted);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(StageId.toString);
     breadcrumb.getMessage() should include("Completed");
-    assert(breadcrumb.getLevel() == (Breadcrumb.Level.INFO));
+    assert(breadcrumb.getLevel() == (SentryLevel.INFO));
 
-    val data = breadcrumb.getData().toMap;
+    val data = breadcrumb.getData().asScala;
     data.valueAt("name") should equal(StageName);
     data.valueAt("attemptNumber") should equal(AttemptNumber.toString);
   }
@@ -175,15 +174,15 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     val mockStageCompleted = new SparkListenerStageCompleted(mockStageInfo);
     sparkListener.onStageCompleted(mockStageCompleted);
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(StageId.toString);
     breadcrumb.getMessage() should include("Failed");
-    assert(breadcrumb.getLevel() == (Breadcrumb.Level.ERROR));
+    assert(breadcrumb.getLevel() == (SentryLevel.ERROR));
 
-    val data = breadcrumb.getData().toMap;
+    val data = breadcrumb.getData().asScala;
     data.valueAt("name") should equal(StageName);
     data.valueAt("attemptNumber") should equal(AttemptNumber.toString);
     data.valueAt("failureReason") should equal(FailureReason);
@@ -193,7 +192,7 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
   "SentrySparkListener.onTaskEnd" should "send to Sentry" ignore {}
 
   "SentrySparkListener" should "capture an error" in {
-    assert(!this.connection.hasSent);
+    assert(this.events.isEmpty);
 
     assertThrows[SparkException] {
       val spark = SparkSession.builder
@@ -216,6 +215,6 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     };
 
     Thread.sleep(1000)
-    assert(this.connection.hasSent);
+    assert(this.events.length === 1);
   }
 }
