@@ -1,6 +1,7 @@
 package io.sentry.spark;
 
-import scala.collection.JavaConversions._
+// import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import org.scalatest._
 
@@ -27,7 +28,9 @@ trait SparkContextSetup {
       testMethod(sparkContext);
     } finally {
       sparkContext.stop();
-      Sentry.getContext().clear();
+      Sentry.configureScope((scope) => {
+        scope.clear();
+      });
     }
   }
 
@@ -48,7 +51,9 @@ trait SparkContextSetup {
       testMethod(sparkSession);
     } finally {
       sparkSession.stop();
-      Sentry.getContext().clear();
+      Sentry.configureScope((scope) => {
+        scope.clear();
+      });
     }
   }
 
@@ -68,7 +73,9 @@ trait SparkContextSetup {
       testMethod(streamingContext);
     } finally {
       streamingContext.stop();
-      Sentry.getContext().clear();
+      Sentry.configureScope((scope) => {
+        scope.clear();
+      });
     }
   }
 }
@@ -81,7 +88,6 @@ class SentrySparkSpec
   "SentrySpark.applyContext" should "set SparkContext tags" in withSparkContext { (sparkContext) =>
     {
       SentrySpark.applyContext(sparkContext);
-
       checkTags(sparkContext);
     }
   }
@@ -89,7 +95,6 @@ class SentrySparkSpec
   "SentrySpark.applyContext" should "set SparkSession tags" in withSparkSession { (sparkSession) =>
     {
       SentrySpark.applyContext(sparkSession);
-
       checkTags(sparkSession.sparkContext);
     }
   }
@@ -98,26 +103,25 @@ class SentrySparkSpec
     (streamingContext) =>
       {
         SentrySpark.applyContext(streamingContext);
-
         checkTags(streamingContext.sparkContext);
       }
   }
 
   def checkTags(sparkContext: SparkContext) {
-    val tags = Sentry.getContext().getTags().toMap;
+    Sentry.configureScope((scope) => {
+      val tags = scope.getTags().asScala;
 
-    tags.valueAt("app_name") should equal(sparkContext.appName);
-    tags.valueAt("version") should equal(sparkContext.version);
-    tags.valueAt("application_id") should equal(sparkContext.applicationId);
-    tags.valueAt("master") should equal(sparkContext.master);
+      tags.valueAt("version") should equal(sparkContext.version);
+      tags.valueAt("application_id") should equal(sparkContext.applicationId);
+      tags.valueAt("master") should equal(sparkContext.master);
 
-    tags.valueAt("driver.host") should equal("localhost");
-    tags.valueAt("driver.port") should equal("5674");
-    tags.valueAt("executor.id") should equal("driver");
-    tags.valueAt("spark-submit.deployMode") should equal("client");
+      tags.valueAt("driver.host") should equal("localhost");
+      tags.valueAt("driver.port") should equal("5674");
+      tags.valueAt("executor.id") should equal("driver");
+      tags.valueAt("spark-submit.deployMode") should equal("client");
 
-    val username = Sentry.getContext().getUser().getUsername();
-
-    assert(username == sparkContext.sparkUser)
+      val username = scope.getUser().getUsername();
+      assert(username == sparkContext.sparkUser)
+    });
   }
 }
