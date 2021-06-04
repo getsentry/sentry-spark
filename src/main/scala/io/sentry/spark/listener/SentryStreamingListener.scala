@@ -48,7 +48,7 @@ class SentryStreamingListener extends StreamingListener {
     event.setLevel(SentryLevel.ERROR);
     event.setTag("name", info.name);
     event.setTag("location", info.location);
-    event.setTag("streamId", info.streamId.toString());
+    event.setTag("streamId", info.streamId.toString);
     event.setTag("executorId", info.executorId);
 
     val message = new Message();

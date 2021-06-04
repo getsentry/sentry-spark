@@ -71,9 +71,10 @@ class SentrySparkListener extends SparkListener {
     val stageInfo = stageSubmitted.stageInfo
 
     val breadcrumb = new Breadcrumb();
+    print(s"Adding name ${stageInfo.name} ${stageInfo.attemptNumber}");
     breadcrumb.setMessage(s"Stage ${stageInfo.stageId} Submitted");
     breadcrumb.setData("name", stageInfo.name);
-    breadcrumb.setData("attempt_number", stageInfo.attemptNumber());
+    breadcrumb.setData("attempt_number", stageInfo.attemptNumber);
     breadcrumb.setCategory(BreadcrumbCategory);
     Sentry.addBreadcrumb(breadcrumb);
   }
@@ -83,7 +84,7 @@ class SentrySparkListener extends SparkListener {
 
     val breadcrumb = new Breadcrumb();
     breadcrumb.setData("name", stageInfo.name);
-    breadcrumb.setData("attempt_number", stageInfo.attemptNumber());
+    breadcrumb.setData("attempt_number", stageInfo.attemptNumber);
     breadcrumb.setCategory(BreadcrumbCategory);
 
     stageInfo.failureReason match {

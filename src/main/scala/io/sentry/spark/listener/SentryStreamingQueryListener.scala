@@ -27,6 +27,7 @@ class SentryStreamingQueryListener extends StreamingQueryListener {
     breadcrumb.setMessage(s"Query ${name} progressed");
     breadcrumb.setData("runId", progress.runId);
     breadcrumb.setData("json", progress.json);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent) {

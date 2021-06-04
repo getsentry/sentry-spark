@@ -130,9 +130,10 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     val breadcrumb = breadcrumbs(0);
     breadcrumb.getMessage() should include(StageId.toString);
 
-    val data = breadcrumb.getData().asScala;
+    val data = breadcrumb.getData().asScala.toMap;
+
     data.valueAt("name") should equal(StageName);
-    data.valueAt("attemptNumber") should equal(AttemptNumber.toString);
+    data.valueAt("attempt_number") should equal(AttemptNumber);
   }
 
   "SentrySparkListener.onStageCompleted" should "set breadcrumb with success" in {
@@ -155,9 +156,9 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     breadcrumb.getMessage() should include("Completed");
     assert(breadcrumb.getLevel() == (SentryLevel.INFO));
 
-    val data = breadcrumb.getData().asScala;
+    val data = breadcrumb.getData().asScala.toMap;
     data.valueAt("name") should equal(StageName);
-    data.valueAt("attemptNumber") should equal(AttemptNumber.toString);
+    data.valueAt("attempt_number") should equal(AttemptNumber);
   }
 
   "SentrySparkListener.onStageCompleted" should "set breadcrumb with failure" in {
@@ -182,10 +183,10 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
     breadcrumb.getMessage() should include("Failed");
     assert(breadcrumb.getLevel() == (SentryLevel.ERROR));
 
-    val data = breadcrumb.getData().asScala;
+    val data = breadcrumb.getData().asScala.toMap;
     data.valueAt("name") should equal(StageName);
-    data.valueAt("attemptNumber") should equal(AttemptNumber.toString);
-    data.valueAt("failureReason") should equal(FailureReason);
+    data.valueAt("attempt_number") should equal(AttemptNumber);
+    data.valueAt("failure_reason") should equal(FailureReason);
   }
 
   // TODO: Add tests for onTaskEnd
