@@ -2,21 +2,22 @@ package io.sentry.spark.listener;
 
 import org.apache.spark.sql.streaming.StreamingQueryListener;
 
-import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent};
+import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent, Scope, ScopeCallback};
 import io.sentry.protocol.Message
+
 class SentryStreamingQueryListener extends StreamingQueryListener {
   private var name: String = "";
 
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent) {
     name = event.name;
-    Sentry.configureScope((scope) => {
+    Sentry.configureScope((scope: Scope) => {
       scope.setTag("query_id", event.id.toString);
 
       val breadcrumb = new Breadcrumb();
       breadcrumb.setData("runId", event.runId);
       breadcrumb.setMessage(s"Query ${name} started");
       scope.addBreadcrumb(breadcrumb);
-    });
+    }: ScopeCallback);
   }
 
   override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent) {

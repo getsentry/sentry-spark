@@ -8,7 +8,7 @@ import org.apache.spark.scheduler._;
 import org.apache.spark.{SparkContext, SparkConf, SparkException};
 import org.apache.spark.sql.SparkSession;
 
-import io.sentry.{Sentry, SentryClient};
+import io.sentry.{Sentry, SentryClient, Scope, ScopeCallback};
 
 import io.sentry.spark.testUtil.SentryBaseSpec;
 import io.sentry.SentryLevel
@@ -25,11 +25,11 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
 
     sparkListener.onApplicationStart(mockAppStart);
 
-    Sentry.configureScope((scope) => {
+    Sentry.configureScope((scope: Scope) => {
       val tags = scope.getTags().asScala;
       tags.valueAt("app_name") should equal(AppName);
       tags.valueAt("application_id") should equal(AppId);
-    });
+    }: ScopeCallback);
   }
 
   "SentrySparkListener.onApplicationStart" should "set breadcrumb" in {

@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.streaming.StreamingContext;
 import org.apache.spark.SparkContext;
 
-import io.sentry.{Sentry, SentryOptions};
+import io.sentry.{Sentry, SentryOptions, Scope, ScopeCallback};
 import io.sentry.protocol.User;
 
 object SentrySpark {
@@ -34,7 +34,7 @@ object SentrySpark {
       sparkConf.get(value)
     }
 
-    Sentry.configureScope((scope) => {
+    Sentry.configureScope((scope: Scope) => {
       // Set Spark User
       val user = new User();
       user.setUsername(sc.sparkUser);
@@ -50,6 +50,6 @@ object SentrySpark {
         case Success(configValue) => scope.setTag(key, configValue)
         case Failure(_)           =>
       }
-    });
+    }: ScopeCallback);
   }
 }

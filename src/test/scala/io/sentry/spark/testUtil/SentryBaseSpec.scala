@@ -3,7 +3,7 @@ package io.sentry.spark.testUtil;
 import org.apache.spark.internal.Logging;
 
 import org.scalatest._;
-import io.sentry.{Sentry, Breadcrumb, SentryEvent};
+import io.sentry.{Sentry, Breadcrumb, SentryEvent, Scope, SentryOptions};
 import scala.collection.mutable.ArrayBuffer;
 
 trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite =>
@@ -11,15 +11,15 @@ trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suit
   val breadcrumbs: ArrayBuffer[Breadcrumb] = ArrayBuffer();
 
   override def beforeAll() {
-    Sentry.init((options) => {
+    Sentry.init((options: SentryOptions) => {
       options.setDsn("https://username@domain/path");
 
-      options.setBeforeSend((event, hint) => {
+      options.setBeforeSend((event: SentryEvent, hint: Any) => {
         events.append(event);
         null
       });
 
-      options.setBeforeBreadcrumb((breadcrumb, hint) => {
+      options.setBeforeBreadcrumb((breadcrumb: Breadcrumb, hint: Any) => {
         breadcrumbs.append(breadcrumb);
         breadcrumb
       });
@@ -30,9 +30,9 @@ trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suit
   override def afterEach() {
     events.clear;
     breadcrumbs.clear;
-    Sentry.configureScope((scope) => {
+    Sentry.configureScope((scope: Scope) => {
       scope.clear();
-    });
+    }: ScopeCallback);
     super.beforeEach();
   }
 }

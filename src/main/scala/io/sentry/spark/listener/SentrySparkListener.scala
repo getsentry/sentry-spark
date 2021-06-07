@@ -13,7 +13,7 @@ import org.apache.spark.{
 
 import org.apache.spark.scheduler._;
 
-import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent};
+import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent, Scope, ScopeCallback};
 import io.sentry.protocol.Message;
 
 class SentrySparkListener extends SparkListener {
@@ -22,7 +22,7 @@ class SentrySparkListener extends SparkListener {
   override def onApplicationStart(
     applicationStart: SparkListenerApplicationStart
   ) {
-    Sentry.configureScope((scope) => {
+    Sentry.configureScope((scope: Scope) => {
       scope.setTag("app_name", applicationStart.appName);
       applicationStart.appId match {
         case Some(id) => scope.setTag("application_id", id)
@@ -37,7 +37,7 @@ class SentrySparkListener extends SparkListener {
       breadcrumb.setMessage(s"Application ${applicationStart.appName} started");
       breadcrumb.setCategory(BreadcrumbCategory);
       scope.addBreadcrumb(breadcrumb);
-    });
+    }: ScopeCallback);
   }
 
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) {

@@ -8,7 +8,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.streaming.{StreamingContext, Seconds};
 import org.apache.spark.{SparkContext, SparkConf};
 
-import io.sentry.Sentry;
+import io.sentry.{Sentry, Scope, ScopeCallback};
 
 trait SparkContextSetup {
   def withSparkContext(testMethod: (SparkContext) => Any) {
@@ -27,9 +27,9 @@ trait SparkContextSetup {
       testMethod(sparkContext);
     } finally {
       sparkContext.stop();
-      Sentry.configureScope((scope) => {
+      Sentry.configureScope((scope: Scope) => {
         scope.clear();
-      });
+      }: ScopeCallback);
     }
   }
 
@@ -50,9 +50,9 @@ trait SparkContextSetup {
       testMethod(sparkSession);
     } finally {
       sparkSession.stop();
-      Sentry.configureScope((scope) => {
+      Sentry.configureScope((scope: Scope) => {
         scope.clear();
-      });
+      }: ScopeCallback);
     }
   }
 
@@ -72,9 +72,9 @@ trait SparkContextSetup {
       testMethod(streamingContext);
     } finally {
       streamingContext.stop();
-      Sentry.configureScope((scope) => {
+      Sentry.configureScope((scope: Scope) => {
         scope.clear();
-      });
+      }: ScopeCallback);
     }
   }
 }
@@ -107,7 +107,7 @@ class SentrySparkSpec
   }
 
   def checkTags(sparkContext: SparkContext) {
-    Sentry.configureScope((scope) => {
+    Sentry.configureScope((scope: Scope) => {
       val tags = scope.getTags().asScala;
 
       tags.valueAt("version") should equal(sparkContext.version);
@@ -121,6 +121,6 @@ class SentrySparkSpec
 
       val username = scope.getUser().getUsername();
       assert(username == sparkContext.sparkUser)
-    });
+    }: ScopeCallback);
   }
 }
