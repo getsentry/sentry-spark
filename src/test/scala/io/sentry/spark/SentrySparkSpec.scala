@@ -29,7 +29,7 @@ trait SparkContextSetup {
       sparkContext.stop();
       Sentry.configureScope((scope: Scope) => {
         scope.clear();
-      }: ScopeCallback);
+      });
     }
   }
 
@@ -52,7 +52,7 @@ trait SparkContextSetup {
       sparkSession.stop();
       Sentry.configureScope((scope: Scope) => {
         scope.clear();
-      }: ScopeCallback);
+      });
     }
   }
 
@@ -74,7 +74,7 @@ trait SparkContextSetup {
       streamingContext.stop();
       Sentry.configureScope((scope: Scope) => {
         scope.clear();
-      }: ScopeCallback);
+      });
     }
   }
 }
@@ -121,6 +121,6 @@ class SentrySparkSpec
 
       val username = scope.getUser().getUsername();
       assert(username == sparkContext.sparkUser)
-    }: ScopeCallback);
+    });
   }
 }

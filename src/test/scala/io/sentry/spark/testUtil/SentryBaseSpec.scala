@@ -32,7 +32,7 @@ trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suit
     breadcrumbs.clear;
     Sentry.configureScope((scope: Scope) => {
       scope.clear();
-    }: ScopeCallback);
+    });
     super.beforeEach();
   }
 }

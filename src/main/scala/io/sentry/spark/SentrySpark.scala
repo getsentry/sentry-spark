@@ -50,6 +50,6 @@ object SentrySpark {
         case Success(configValue) => scope.setTag(key, configValue)
         case Failure(_)           =>
       }
-    }: ScopeCallback);
+    });
   }
 }

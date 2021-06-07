@@ -29,7 +29,7 @@ class SentrySparkListenerSpec extends SentryBaseSpec {
       val tags = scope.getTags().asScala;
       tags.valueAt("app_name") should equal(AppName);
       tags.valueAt("application_id") should equal(AppId);
-    }: ScopeCallback);
+    });
   }
 
   "SentrySparkListener.onApplicationStart" should "set breadcrumb" in {

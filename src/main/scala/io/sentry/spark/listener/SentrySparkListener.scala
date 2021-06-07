@@ -37,7 +37,7 @@ class SentrySparkListener extends SparkListener {
       breadcrumb.setMessage(s"Application ${applicationStart.appName} started");
       breadcrumb.setCategory(BreadcrumbCategory);
       scope.addBreadcrumb(breadcrumb);
-    }: ScopeCallback);
+    });
   }
 
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) {

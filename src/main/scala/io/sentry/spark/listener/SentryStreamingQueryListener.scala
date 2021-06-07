@@ -17,7 +17,7 @@ class SentryStreamingQueryListener extends StreamingQueryListener {
       breadcrumb.setData("runId", event.runId);
       breadcrumb.setMessage(s"Query ${name} started");
       scope.addBreadcrumb(breadcrumb);
-    }: ScopeCallback);
+    });
   }
 
   override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent) {

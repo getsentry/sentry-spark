@@ -13,3 +13,5 @@ target/
 
 .metals
 .bloop
+
+project/project
