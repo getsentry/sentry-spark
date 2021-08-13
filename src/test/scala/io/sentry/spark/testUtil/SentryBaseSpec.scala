@@ -16,19 +16,21 @@ trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suit
       options.setDsn("https://username@domain/path");
 
       options.setBeforeSend(new SentryOptions.BeforeSendCallback {
-        def execute(event: SentryEvent, hint: Any): SentryEvent = {
-          events.append(event);
+        override def execute(event: SentryEvent, hint: Any): SentryEvent = {
+          println("[sentry] event being appended");
+          events.append(event)
           event
         }
       });
 
       options.setBeforeBreadcrumb(new SentryOptions.BeforeBreadcrumbCallback {
-        def execute(breadcrumb: Breadcrumb, hint: Any): Breadcrumb = {
+        override def execute(breadcrumb: Breadcrumb, hint: Any): Breadcrumb = {
           breadcrumbs.append(breadcrumb);
           breadcrumb
         }
       });
     });
+
     super.beforeAll();
   }
 
