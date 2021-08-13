@@ -3,89 +3,77 @@ package io.sentry.spark.listener;
 import io.sentry.spark.util.Time;
 
 import org.apache.spark.streaming.scheduler._;
-
-import io.sentry.Sentry;
-import io.sentry.event.{Event, EventBuilder, BreadcrumbBuilder};
+import io.sentry.{Sentry, Breadcrumb};
+import io.sentry.SentryEvent
+import io.sentry.SentryLevel
+import io.sentry.protocol.Message
 
 class SentryStreamingListener extends StreamingListener {
+  lazy val BreadcrumbCategory = "spark-streaming";
+
   override def onStreamingStarted(streamingStarted: StreamingListenerStreamingStarted) {
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage("Streaming started")
-          .withData("time", Time.epochMilliToDateString(streamingStarted.time))
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage("Streaming started");
+    breadcrumb.setData("time", Time.epochMilliToDateString(streamingStarted.time));
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onReceiverStarted(receiverStarted: StreamingListenerReceiverStarted) {
     val info = receiverStarted.receiverInfo;
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Receiver ${info.name} started on ${info.location}")
-          .withData("streamId", info.streamId.toString)
-          .withData("executorId", info.executorId.toString)
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Receiver ${info.name} started on ${info.location}");
+    breadcrumb.setData("streamId", info.streamId.toString);
+    breadcrumb.setData("executorId", info.executorId.toString);
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onReceiverStopped(receiverStopped: StreamingListenerReceiverStopped) {
     val info = receiverStopped.receiverInfo;
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Receiver ${info.name} stopped on ${info.location}")
-          .withData("streamId", info.streamId.toString)
-          .withData("executorId", info.executorId.toString)
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Receiver ${info.name} stopped on ${info.location}");
+    breadcrumb.setData("streamId", info.streamId.toString);
+    breadcrumb.setData("executorId", info.executorId.toString);
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onReceiverError(receiverError: StreamingListenerReceiverError) {
     val info = receiverError.receiverInfo;
 
-    val eventBuilder: EventBuilder = new EventBuilder()
-      .withSdkIntegration("spark_scala")
-      .withMessage(info.lastError)
-      .withTag("name", info.name)
-      .withTag("location", info.location)
-      .withTag("streamId", info.streamId.toString)
-      .withTag("executorId", info.executorId.toString)
-      .withLevel(Event.Level.ERROR)
+    val event = new SentryEvent();
+    event.setLevel(SentryLevel.ERROR);
+    event.setTag("name", info.name);
+    event.setTag("location", info.location);
+    event.setTag("streamId", info.streamId.toString);
+    event.setTag("executorId", info.executorId);
 
-    Sentry.capture(eventBuilder);
+    val message = new Message();
+    message.setFormatted(info.lastError);
+    event.setMessage(message);
+
+    Sentry.captureEvent(event);
   }
 
   override def onBatchStarted(batchStarted: StreamingListenerBatchStarted) {
     val info = batchStarted.batchInfo;
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Batch started with ${info.numRecords} records")
-          .withData("submissionTime", Time.epochMilliToDateString(info.submissionTime))
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Batch started with ${info.numRecords} records");
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted) {
     val info = batchCompleted.batchInfo;
 
-    Sentry
-      .getContext()
-      .recordBreadcrumb(
-        new BreadcrumbBuilder()
-          .setMessage(s"Batch completed with ${info.numRecords} records")
-          .withData("submissionTime", Time.epochMilliToDateString(info.submissionTime))
-          .build()
-      );
+    val breadcrumb = new Breadcrumb();
+    breadcrumb.setMessage(s"Batch completed with ${info.numRecords} records");
+    breadcrumb.setCategory(BreadcrumbCategory);
+    Sentry.addBreadcrumb(breadcrumb);
   }
 
   override def onOutputOperationCompleted(
@@ -95,15 +83,17 @@ class SentryStreamingListener extends StreamingListener {
 
     info.failureReason match {
       case Some(reason) => {
-        val eventBuilder: EventBuilder = new EventBuilder()
-          .withSdkIntegration("spark_scala")
-          .withMessage(reason)
-          .withTag("name", info.name)
-          .withTag("id", info.id.toString)
-          .withExtra("description", info.description)
-          .withLevel(Event.Level.ERROR)
+        val event = new SentryEvent();
+        event.setTag("name", info.name);
+        event.setTag("id", info.id.toString);
+        event.setExtra("description", info.description);
+        event.setLevel(SentryLevel.ERROR);
 
-        Sentry.capture(eventBuilder);
+        val message = new Message();
+        message.setFormatted(reason);
+        event.setMessage(message);
+
+        Sentry.captureEvent(event);
       }
       case None =>
     }

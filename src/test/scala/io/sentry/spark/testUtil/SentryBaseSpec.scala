@@ -1,43 +1,43 @@
 package io.sentry.spark.testUtil;
 
-import io.sentry.context.ContextManager;
-import io.sentry.context.SingletonContextManager;
-import io.sentry.{Sentry, SentryClient, SentryClientFactory};
-import io.sentry.event.Event;
-import io.sentry.connection.{Connection, EventSendCallback};
-
 import org.apache.spark.internal.Logging;
 
 import org.scalatest._;
+import io.sentry.{Sentry, Breadcrumb, SentryEvent, Scope, SentryOptions};
+import scala.collection.mutable.ArrayBuffer;
+import io.sentry.spark.util.SentryHelper
 
-class MockConnection extends Connection {
-  var hasSent = false;
-  var lastEvent: Any = null;
+trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite =>
+  val events: ArrayBuffer[SentryEvent] = ArrayBuffer();
+  val breadcrumbs: ArrayBuffer[Breadcrumb] = ArrayBuffer();
 
-  def resetMockConnection() {
-    hasSent = false;
-    lastEvent = null;
+  override def beforeAll() {
+    SentryHelper.init((options: SentryOptions) => {
+      options.setDsn("https://username@domain/path");
+
+      options.setBeforeSend(new SentryOptions.BeforeSendCallback {
+        def execute(event: SentryEvent, hint: Any): SentryEvent = {
+          events.append(event);
+          event
+        }
+      });
+
+      options.setBeforeBreadcrumb(new SentryOptions.BeforeBreadcrumbCallback {
+        def execute(breadcrumb: Breadcrumb, hint: Any): Breadcrumb = {
+          breadcrumbs.append(breadcrumb);
+          breadcrumb
+        }
+      });
+    });
+    super.beforeAll();
   }
-
-  override def send(event: Event) {
-    hasSent = true;
-    lastEvent = event;
-  }
-
-  override def close() = ()
-
-  override def addEventSendCallback(eventSendCallback: EventSendCallback) = ()
-}
-
-trait SetupSentry extends BeforeAndAfterEach { this: Suite =>
-  val connection = new MockConnection();
-  val contextManager = new SingletonContextManager();
 
   override def beforeEach() {
-    connection.resetMockConnection();
-    contextManager.clear();
-    val sentryClient = new SentryClient(connection, contextManager);
-    Sentry.setStoredClient(sentryClient);
+    events.clear;
+    breadcrumbs.clear;
+    SentryHelper.configureScope((scope: Scope) => {
+      scope.clear();
+    });
     super.beforeEach();
   }
 }

@@ -8,9 +8,7 @@ import org.apache.spark.sql.{SparkSession, AnalysisException};
 import org.apache.spark.sql.util.QueryExecutionListener;
 import org.apache.spark.sql.execution.QueryExecution
 
-import io.sentry.{Sentry, SentryClient};
-import io.sentry.event.{Breadcrumb, Event};
-import io.sentry.event.helper.ShouldSendEventCallback;
+import io.sentry.Sentry;
 
 import io.sentry.spark.testUtil.SentryBaseSpec;
 
@@ -38,7 +36,7 @@ class SentryQueryExecutionListenerSpec extends SentryBaseSpec {
 
     spark.stop();
 
-    val breadcrumbs = Sentry.getContext().getBreadcrumbs();
+    val breadcrumbs = this.breadcrumbs;
     breadcrumbs should have length 1;
 
     val breadcrumb = breadcrumbs(0);

@@ -1,8 +1,10 @@
 import sbt._
 import Keys._
 
-val sparkVersion = "2.4.5"
-val sentryVersion = "1.7.30"
+lazy val sentrySparkVersion = "0.0.1-alpha05"
+
+lazy val sparkVersion = "2.4.5"
+lazy val sentryVersion = "5.0.0"
 
 lazy val scala211 = "2.11.12"
 lazy val scala212 = "2.12.10"
@@ -10,7 +12,7 @@ lazy val supportedScalaVersions = List(scala211, scala212)
 
 lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization := "io.sentry",
-  version := "0.0.1-alpha05",
+  version := sentrySparkVersion,
   crossScalaVersions := supportedScalaVersions,
   scalacOptions ++= Seq("-target:jvm-1.8",
                         "-deprecation",
@@ -48,7 +50,7 @@ lazy val root: Project = project
     description := "Sentry Integration for Apache Spark",
     run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     parallelExecution in Test := false,
-    fork in Test := true,
+    fork in Test := false,
     javaOptions in Test ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled"),
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
