@@ -16,13 +16,15 @@ import org.apache.spark.scheduler._;
 import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent, Scope, ScopeCallback};
 import io.sentry.protocol.Message;
 
+import io.sentry.spark.util.SentryHelper
+
 class SentrySparkListener extends SparkListener {
   lazy val BreadcrumbCategory = "spark";
 
   override def onApplicationStart(
     applicationStart: SparkListenerApplicationStart
   ) {
-    Sentry.configureScope((scope: Scope) => {
+    SentryHelper.configureScope((scope: Scope) => {
       scope.setTag("app_name", applicationStart.appName);
       applicationStart.appId match {
         case Some(id) => scope.setTag("application_id", id)

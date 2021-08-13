@@ -5,12 +5,14 @@ import org.apache.spark.sql.streaming.StreamingQueryListener;
 import io.sentry.{Sentry, Breadcrumb, SentryLevel, SentryEvent, Scope, ScopeCallback};
 import io.sentry.protocol.Message
 
+import io.sentry.spark.util.SentryHelper
+
 class SentryStreamingQueryListener extends StreamingQueryListener {
   private var name: String = "";
 
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent) {
     name = event.name;
-    Sentry.configureScope((scope: Scope) => {
+    SentryHelper.configureScope((scope: Scope) => {
       scope.setTag("query_id", event.id.toString);
 
       val breadcrumb = new Breadcrumb();

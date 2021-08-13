@@ -5,32 +5,37 @@ import org.apache.spark.internal.Logging;
 import org.scalatest._;
 import io.sentry.{Sentry, Breadcrumb, SentryEvent, Scope, SentryOptions};
 import scala.collection.mutable.ArrayBuffer;
+import io.sentry.spark.util.SentryHelper
 
 trait SetupSentry extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite =>
   val events: ArrayBuffer[SentryEvent] = ArrayBuffer();
   val breadcrumbs: ArrayBuffer[Breadcrumb] = ArrayBuffer();
 
   override def beforeAll() {
-    Sentry.init((options: SentryOptions) => {
+    SentryHelper.init((options: SentryOptions) => {
       options.setDsn("https://username@domain/path");
 
-      options.setBeforeSend((event: SentryEvent, hint: Any) => {
-        events.append(event);
-        null
+      options.setBeforeSend(new SentryOptions.BeforeSendCallback {
+        def execute(event: SentryEvent, hint: Any): SentryEvent = {
+          events.append(event);
+          event
+        }
       });
 
-      options.setBeforeBreadcrumb((breadcrumb: Breadcrumb, hint: Any) => {
-        breadcrumbs.append(breadcrumb);
-        breadcrumb
+      options.setBeforeBreadcrumb(new SentryOptions.BeforeBreadcrumbCallback {
+        def execute(breadcrumb: Breadcrumb, hint: Any): Breadcrumb = {
+          breadcrumbs.append(breadcrumb);
+          breadcrumb
+        }
       });
     });
     super.beforeAll();
   }
 
-  override def afterEach() {
+  override def beforeEach() {
     events.clear;
     breadcrumbs.clear;
-    Sentry.configureScope((scope: Scope) => {
+    SentryHelper.configureScope((scope: Scope) => {
       scope.clear();
     });
     super.beforeEach();

@@ -9,6 +9,7 @@ import org.apache.spark.streaming.{StreamingContext, Seconds};
 import org.apache.spark.{SparkContext, SparkConf};
 
 import io.sentry.{Sentry, Scope, ScopeCallback};
+import io.sentry.spark.util.SentryHelper
 
 trait SparkContextSetup {
   def withSparkContext(testMethod: (SparkContext) => Any) {
@@ -27,7 +28,7 @@ trait SparkContextSetup {
       testMethod(sparkContext);
     } finally {
       sparkContext.stop();
-      Sentry.configureScope((scope: Scope) => {
+      SentryHelper.configureScope((scope: Scope) => {
         scope.clear();
       });
     }
@@ -50,7 +51,7 @@ trait SparkContextSetup {
       testMethod(sparkSession);
     } finally {
       sparkSession.stop();
-      Sentry.configureScope((scope: Scope) => {
+      SentryHelper.configureScope((scope: Scope) => {
         scope.clear();
       });
     }
@@ -72,7 +73,7 @@ trait SparkContextSetup {
       testMethod(streamingContext);
     } finally {
       streamingContext.stop();
-      Sentry.configureScope((scope: Scope) => {
+      SentryHelper.configureScope((scope: Scope) => {
         scope.clear();
       });
     }
@@ -107,7 +108,7 @@ class SentrySparkSpec
   }
 
   def checkTags(sparkContext: SparkContext) {
-    Sentry.configureScope((scope: Scope) => {
+    SentryHelper.configureScope((scope: Scope) => {
       val tags = scope.getTags().asScala;
 
       tags.valueAt("version") should equal(sparkContext.version);

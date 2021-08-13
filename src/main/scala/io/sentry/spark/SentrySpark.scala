@@ -1,5 +1,7 @@
 package io.sentry.spark;
 
+import io.sentry.spark.util.SentryHelper
+
 import scala.util.{Try, Success, Failure}
 
 import org.apache.spark.sql.SparkSession;
@@ -34,7 +36,7 @@ object SentrySpark {
       sparkConf.get(value)
     }
 
-    Sentry.configureScope((scope: Scope) => {
+    SentryHelper.configureScope((scope: Scope) => {
       // Set Spark User
       val user = new User();
       user.setUsername(sc.sparkUser);
